@@ -1,0 +1,168 @@
+/* MAIN PAGE */
+.product-page{
+  padding:120px 20px;
+}
+
+/* PRODUCT CONTAINER */
+.product-container{
+  max-width:1200px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:80px;
+  align-items:start;
+}
+
+/* IMAGE SECTION */
+.product-image-section{
+  width:100%;
+}
+
+.product-image-section img{
+  width:100%;
+  height:auto;
+  object-fit:cover;
+  border-radius:6px;
+}
+
+/* INFO SECTION */
+.product-info-section{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+}
+
+.product-info-section h1{
+  font-size:40px;
+  font-family:"Playfair Display", serif;
+  margin-bottom:18px;
+}
+
+.product-price{
+  font-size:22px;
+  margin-bottom:18px;
+}
+
+.product-description{
+  color:#666;
+  line-height:1.7;
+  margin-bottom:30px;
+  max-width:420px;
+}
+
+.product-cart-btn{
+  padding:14px 28px;
+  background:#111;
+  color:white;
+  border:none;
+  cursor:pointer;
+  font-size:15px;
+  width:220px;
+  transition:all .2s ease;
+}
+
+.product-cart-btn:hover{
+  background:black;
+}
+
+.related-section{
+  margin-top:120px;
+}
+
+.related-section h2{
+  text-align:center;
+  font-family:"Playfair Display", serif;
+  margin-bottom:40px;
+}
+
+.related-grid{
+  max-width:1200px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:40px;
+}
+.back-to-shop-btn{
+  margin-bottom: 30px;
+  padding: 10px 18px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  color: #333;
+  font-weight: 500;
+}
+
+.back-to-shop-btn:hover{
+  text-decoration: underline;
+}
+
+/* ---------------- */
+/* TABLET */
+@media (max-width:1024px){
+
+  .product-container{
+    gap:50px;
+  }
+
+  .product-info-section h1{
+    font-size:34px;
+  }
+
+}
+
+/* ---------------- */
+/* SMALL TABLET */
+@media (max-width:900px){
+
+  .product-container{
+    grid-template-columns:1fr;
+    gap:50px;
+  }
+
+  .product-image-section img{
+    max-height:600px;
+    object-fit:cover;
+  }
+
+  .product-info-section{
+    align-items:flex-start;
+  }
+
+}
+
+/* ---------------- */
+/* MOBILE */
+@media (max-width:600px){
+
+  .product-page{
+    padding:100px 16px;
+  }
+
+  .product-info-section h1{
+    font-size:28px;
+  }
+
+  .product-price{
+    font-size:20px;
+  }
+
+  .product-description{
+    font-size:14px;
+  }
+
+  .product-cart-btn{
+    width:100%;
+  }
+
+}
+
+/* ---------------- */
+/* VERY SMALL PHONES */
+@media (max-width:400px){
+
+  .product-info-section h1{
+    font-size:24px;
+  }
+
+}

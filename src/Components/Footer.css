@@ -1,0 +1,27 @@
+.footer{
+  background:#f6f6f6;
+  padding:60px 8%;
+}
+
+.footer-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:40px;
+}
+
+.footer h4{
+  margin-bottom:10px;
+}
+
+.footer p{
+  color:#666;
+  margin:4px 0;
+}
+
+.copyright{
+  margin-top:40px;
+  border-top:1px solid #ddd;
+  padding-top:20px;
+  font-size:14px;
+  color:#888;
+}

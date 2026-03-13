@@ -1,0 +1,60 @@
+.hero {
+  height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-image: url("/hero.png");
+  background-size: cover;
+  background-position: center;
+
+  position: relative;
+}
+
+/* Dark overlay */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 700px;
+  text-align: center;
+  color: white;
+}
+
+.hero-subtitle {
+  letter-spacing: 4px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+
+.hero h1 {
+  font-size: 64px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.hero-text {
+  font-size: 18px;
+  margin-bottom: 30px;
+}
+
+.hero-btn {
+  background: white;
+  color: black;
+  padding: 14px 32px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.hero-btn:hover {
+  background: #f2f2f2;
+}
