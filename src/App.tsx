@@ -11,6 +11,7 @@ import ProductDetails from "./pages/ProductDetails";
 import ProductPage from "./pages/ProductPage";
 import Shop from "./pages/Shop"
 import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess"
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/order-success" element={<OrderSuccess />} />
       </Routes>
     </>
   );
