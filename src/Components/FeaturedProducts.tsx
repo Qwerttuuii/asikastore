@@ -176,7 +176,7 @@ function FeaturedProducts() {
             </div>
 
             <h4>{product.name}</h4>
-            <p>${product.price}</p>
+            <p>₦{product.price}</p>
 
           </div>
         ))}

@@ -76,7 +76,7 @@ export default function ProductCard({ product }: Props) {
 
         <h3>{product.name}</h3>
 
-        <p className="price">${product.price}</p>
+        <p className="price">₦{product.price}</p>
 
         <button className="add-btn" onClick={addToCart}>
           Add to Cart

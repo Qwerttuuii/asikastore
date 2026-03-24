@@ -38,6 +38,7 @@
   display:flex;
   justify-content:space-between;
   align-items:center;
+  gap:20px;
   padding:40px 8%;
   border-bottom:1px solid #e5e5e5;
 }
@@ -45,6 +46,7 @@
 /* FILTER BUTTONS */
 .filter-buttons{
   display:flex;
+  flex-wrap:wrap;
   gap:12px;
 }
 
@@ -270,5 +272,95 @@
   }
   100%{
     background-position:0 50%;
+  }
+}
+
+@media (max-width: 900px) {
+  .shop-hero {
+    padding: 110px 20px 72px;
+  }
+
+  .shop-hero h1 {
+    font-size: 48px;
+  }
+
+  .shop-filters {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 28px 20px;
+  }
+
+  .filter-info {
+    align-self: flex-end;
+  }
+
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    padding: 40px 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .shop-hero {
+    padding: 92px 16px 56px;
+  }
+
+  .shop-subtitle {
+    letter-spacing: 3px;
+  }
+
+  .shop-hero h1 {
+    font-size: 36px;
+    margin-bottom: 14px;
+  }
+
+  .shop-desc {
+    font-size: 14px;
+  }
+
+  .shop-filters {
+    padding: 24px 16px;
+  }
+
+  .filter-buttons {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .filter-buttons button {
+    flex: 1 1 calc(50% - 10px);
+    padding: 10px 12px;
+  }
+
+  .filter-info {
+    align-self: flex-start;
+  }
+
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 32px 16px;
+    gap: 16px;
+  }
+
+  .product-image {
+    height: auto;
+    aspect-ratio: 3 / 4;
+  }
+
+  .product-overlay {
+    opacity: 1;
+    padding: 12px;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.55));
+  }
+
+  .shop-bottom {
+    padding: 72px 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .shop-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -79,7 +79,7 @@ function CartDrawer({ isOpen, setIsOpen }: Props) {
                 </div>
 
                 <p className="price">
-                  ${item.products?.price}
+                  ₦{item.products?.price}
                 </p>
 
                 <div className="quantity">
@@ -119,7 +119,7 @@ function CartDrawer({ isOpen, setIsOpen }: Props) {
 
           <div className="subtotal">
             <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>₦{subtotal.toFixed(2)}</span>
           </div>
 
           <button

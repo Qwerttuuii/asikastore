@@ -3,9 +3,7 @@ import "./Footer.css";
 function Footer() {
   return (
     <footer className="footer">
-
       <div className="footer-grid">
-
         <div>
           <h3>ASIKA</h3>
           <p>Elegant dresses designed for the modern woman.</p>
@@ -33,13 +31,11 @@ function Footer() {
           <p>Returns</p>
           <p>FAQ</p>
         </div>
-
       </div>
 
       <div className="copyright">
-        © 2026 ASIKA. All rights reserved.
+        (c) 2026 ASIKA. All rights reserved.
       </div>
-
     </footer>
   );
 }

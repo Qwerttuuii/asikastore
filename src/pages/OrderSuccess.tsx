@@ -1,21 +1,41 @@
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import "./OrderSuccess.css";
 
-export default function OrderSuccess(){
+export default function OrderSuccess() {
+  const [show, setShow] = useState(false);
 
-return(
+  useEffect(() => {
+    setTimeout(() => {
+      setShow(true);
+    }, 200);
+  }, []);
 
-<div style={{padding:"120px",textAlign:"center"}}>
+  return (
+    <div className="success-page">
 
-<h1>🎉 Order Successful</h1>
+      <div className={`success-card ${show ? "show" : ""}`}>
 
-<p>Your payment was successful and your order has been placed.</p>
+        {/* CHECK ICON */}
+        <div className="success-icon">
+          ✓
+        </div>
 
-<Link to="/shop">
-Continue Shopping
-</Link>
+        <h1>Payment Successful</h1>
+        <p>Your order has been placed successfully.</p>
 
-</div>
+        <div className="success-actions">
+          <Link to="/shop" className="btn-outline">
+            Continue Shopping
+          </Link>
 
-)
+          <Link to="/orders" className="btn-primary">
+            View Orders
+          </Link>
+        </div>
 
+      </div>
+
+    </div>
+  );
 }
