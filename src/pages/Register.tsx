@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { Link, useNavigate } from "react-router-dom";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import "./Auth.css";
 
 const Register = () => {
@@ -10,17 +11,36 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const buildVerifyEmailUrl = () => {
-    const params = new URLSearchParams({
-      email,
-      firstName,
-      lastName,
-      username,
+  const generateOTP = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  const buildOtpPayload = (otp: string) => ({
+    email,
+    code: otp,
+    used: false,
+    expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  });
+
+  const sendOTPEmail = async (toEmail: string, otp: string, name: string) => {
+    const { error } = await supabase.functions.invoke("send-otp-email", {
+      body: {
+        email: toEmail,
+        otp,
+        name,
+        subject: "Your ASIKA verification code",
+      },
     });
 
-    return `${window.location.origin}/verify-email?${params.toString()}`;
+    if (error) {
+      console.error("OTP email error:", error);
+      return false;
+    }
+
+    return true;
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -29,9 +49,10 @@ const Register = () => {
       alert("Please fill all fields");
       return;
     }
+
     setLoading(true);
+
     try {
-      // CHECK IF USERNAME EXISTS
       const { data: existingUser } = await supabase
         .from("profiles")
         .select("username")
@@ -44,32 +65,30 @@ const Register = () => {
         return;
       }
 
-      // CREATE AUTH USER — no profile insert here
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: buildVerifyEmailUrl(),
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            username,
-          },
-        },
-      });
+      const otp = generateOTP();
 
-      if (error) {
-        alert(error.message);
+      const { error: otpError } = await supabase
+        .from("otp_codes")
+        .insert(buildOtpPayload(otp));
+
+      if (otpError) {
+        console.error("OTP save error:", otpError);
+        alert("Failed to generate verification code");
         setLoading(false);
         return;
       }
 
-      // PASS USER DATA TO VERIFY PAGE VIA URL PARAMS
-      // Profile will be created AFTER OTP verification
-      navigate(
-        `/verify-email?email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}&username=${encodeURIComponent(username)}`
-      );
+      const sent = await sendOTPEmail(email, otp, firstName);
 
+      if (!sent) {
+        alert("Failed to send verification email. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      navigate(
+        `/verify-email?email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+      );
     } catch (err) {
       console.error(err);
       alert("Something went wrong");
@@ -80,7 +99,6 @@ const Register = () => {
 
   return (
     <div className="auth-page">
-      {/* LEFT PANEL */}
       <div className="auth-left">
         <div className="auth-left-content">
           <Link to="/" className="auth-brand">ASIKA</Link>
@@ -96,7 +114,6 @@ const Register = () => {
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
       <div className="auth-right">
         <div className="auth-form-wrap">
           <div className="auth-form-header">
@@ -149,19 +166,29 @@ const Register = () => {
 
             <div className="auth-field">
               <label className="auth-label">Password</label>
-              <input
-                className="auth-input"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="auth-password-wrap">
+                <input
+                  className="auth-input auth-password-input"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
             </div>
 
             <button className="auth-btn" type="submit" disabled={loading}>
               {loading ? (
                 <span className="auth-btn-loading">
-                  <span className="auth-btn-spinner" /> Creating account...
+                  <span className="auth-btn-spinner" /> Sending code...
                 </span>
               ) : "Create Account"}
             </button>

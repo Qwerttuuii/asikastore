@@ -13,7 +13,8 @@ import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess"
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
-import VerifyEmail from "./pages/Verifyemail";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
 
 
 function App() {
@@ -25,7 +26,9 @@ function App() {
   const hideNavbar =
     pathname === "/login" ||
     pathname === "/register" ||
-    pathname === "/admin";
+    pathname === "/admin" ||
+    pathname === "/verify-email" ||
+    pathname === "/reset-password";
 
   return (
     <>
@@ -46,6 +49,7 @@ function App() {
         <Route path="/orders" element={<Orders />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </>
   );

@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import "./Auth.css";
 
 const Login = () => {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const justVerified = searchParams.get("verified") === "true";
+  const resetSent = searchParams.get("reset") === "sent";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +21,9 @@ const Login = () => {
       alert("Fill all fields");
       return;
     }
+
     setLoading(true);
+
     try {
       let emailToUse = identifier;
 
@@ -27,11 +33,13 @@ const Login = () => {
           .select("email")
           .eq("username", identifier)
           .single();
+
         if (error || !profile) {
           alert("Username not found");
           setLoading(false);
           return;
         }
+
         emailToUse = profile.email;
       }
 
@@ -59,15 +67,48 @@ const Login = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!identifier) {
+      alert("Enter your email address first.");
+      return;
+    }
+
+    if (!identifier.includes("@")) {
+      alert("Use your email address to reset your password.");
+      return;
+    }
+
+    setResettingPassword(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(identifier, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        alert(error.message);
+        setResettingPassword(false);
+        return;
+      }
+
+      alert("Password reset email sent. Check your inbox.");
+      navigate("/login?reset=sent", { replace: true });
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
   return (
     <div className="auth-page">
-      {/* LEFT PANEL */}
       <div className="auth-left">
         <div className="auth-left-content">
           <Link to="/" className="auth-brand">ASIKA</Link>
           <h2 className="auth-left-title">Dressed to<br />be remembered.</h2>
           <p className="auth-left-sub">
-            Timeless silhouettes crafted with intention — from effortless day dresses to statement evening wear.
+            Timeless silhouettes crafted with intention from effortless day dresses to statement evening wear.
           </p>
           <div className="auth-left-dots">
             <span className="auth-dot auth-dot-active" />
@@ -77,14 +118,17 @@ const Login = () => {
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
       <div className="auth-right">
         <div className="auth-form-wrap">
-
-          {/* SUCCESS BANNER — shows after email verification */}
           {justVerified && (
             <div className="auth-success-banner">
-              ✓ Email verified successfully! You can now sign in.
+              Email verified successfully. You can now sign in.
+            </div>
+          )}
+
+          {resetSent && (
+            <div className="auth-success-banner">
+              Password reset email sent. Open the link in your inbox to choose a new password.
             </div>
           )}
 
@@ -106,13 +150,34 @@ const Login = () => {
 
             <div className="auth-field">
               <label className="auth-label">Password</label>
-              <input
-                className="auth-input"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="auth-password-wrap">
+                <input
+                  className="auth-input auth-password-input"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+            </div>
+
+            <div className="auth-inline-action">
+              <button
+                type="button"
+                className="auth-text-btn"
+                onClick={handleForgotPassword}
+                disabled={resettingPassword}
+              >
+                {resettingPassword ? "Sending reset link..." : "Forgot password?"}
+              </button>
             </div>
 
             <button className="auth-btn" type="submit" disabled={loading}>

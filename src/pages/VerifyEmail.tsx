@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import "./Auth.css";
@@ -13,71 +13,16 @@ const VerifyEmail = () => {
   const firstName = searchParams.get("firstName") || "";
   const lastName = searchParams.get("lastName") || "";
   const username = searchParams.get("username") || "";
-  const tokenHash = searchParams.get("token_hash") || "";
+  const password = searchParams.get("password") || "";
 
   const navigate = useNavigate();
 
-  const buildVerifyEmailUrl = () => {
-    const params = new URLSearchParams({
-      email,
-      firstName,
-      lastName,
-      username,
-    });
-
-    return `${window.location.origin}/verify-email?${params.toString()}`;
-  };
-
-  const createProfile = async (user: { id: string; email?: string | null }) => {
-    const { error } = await supabase.from("profiles").upsert({
-      id: user.id,
-      email: user.email,
-      username,
-      first_name: firstName,
-      last_name: lastName,
-      role: "USER",
-    });
-
-    if (error) {
-      console.error("Profile upsert error:", error);
-    }
-  };
-
-  useEffect(() => {
-    const completeEmailLinkVerification = async () => {
-      if (!tokenHash) {
-        return;
-      }
-
-      setLoading(true);
-
-      try {
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: "email",
-        });
-
-        if (error) {
-          alert(error.message);
-          return;
-        }
-
-        if (data.user) {
-          await createProfile(data.user);
-        }
-
-        await supabase.auth.signOut();
-        navigate("/login?verified=true", { replace: true });
-      } catch (err) {
-        console.error(err);
-        alert("Something went wrong while verifying your email.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void completeEmailLinkVerification();
-  }, [navigate, tokenHash]);
+  const buildOtpPayload = (code: string) => ({
+    email,
+    code,
+    used: false,
+    expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  });
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,22 +34,63 @@ const VerifyEmail = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: "email",
-      });
+      const { data: otpRecords, error: otpError } = await supabase
+        .from("otp_codes")
+        .select("*")
+        .eq("email", email)
+        .order("created_at", { ascending: false })
+        .limit(10);
 
-      if (error) {
-        alert(error.message);
+      if (otpError || !otpRecords) {
+        console.error("OTP lookup error:", otpError);
+        alert("Could not verify the code. Please try again.");
+        setLoading(false);
         return;
       }
 
-      if (data.user) {
-        await createProfile(data.user);
+      const otpRecord = otpRecords.find((record) => String(record.code) === otp);
+      const isExpired =
+        otpRecord?.expires_at != null &&
+        new Date(otpRecord.expires_at).getTime() < Date.now();
+      const isUsed = otpRecord?.used === true;
+
+      if (!otpRecord || isUsed || isExpired) {
+        alert("Invalid or expired code. Please try again.");
+        setLoading(false);
+        return;
       }
 
-      await supabase.auth.signOut();
+      await supabase
+        .from("otp_codes")
+        .update({ used: true })
+        .eq("id", otpRecord.id);
+
+      const { data: completeRegistrationData, error: completeRegistrationError } = await supabase.functions.invoke(
+        "complete-registration",
+        {
+          body: {
+            email,
+            password,
+            firstName,
+            lastName,
+            username,
+          },
+        },
+      );
+
+      if (completeRegistrationError) {
+        console.error("Complete registration error:", completeRegistrationError);
+        const functionMessage =
+          completeRegistrationData &&
+          typeof completeRegistrationData === "object" &&
+          "error" in completeRegistrationData
+            ? String(completeRegistrationData.error)
+            : completeRegistrationError.message;
+        alert(functionMessage || "We could not finish creating your account. Please try again.");
+        setLoading(false);
+        return;
+      }
+
       navigate("/login?verified=true");
     } catch (err) {
       console.error(err);
@@ -117,38 +103,50 @@ const VerifyEmail = () => {
   const handleResend = async () => {
     setResending(true);
 
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
-      options: {
-        emailRedirectTo: buildVerifyEmailUrl(),
-      },
-    });
+    try {
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    if (error) {
-      alert(error.message);
-    } else {
-      alert("A new verification email has been sent.");
+      const { error: insertError } = await supabase
+        .from("otp_codes")
+        .insert(buildOtpPayload(newOtp));
+
+      if (insertError) {
+        console.error("Resend OTP save error:", insertError);
+        alert("Failed to create a new code. Please try again.");
+        return;
+      }
+
+      const { error } = await supabase.functions.invoke("send-otp-email", {
+        body: {
+          email,
+          otp: newOtp,
+          name: firstName,
+          subject: "Your new ASIKA verification code",
+        },
+      });
+
+      if (!error) {
+        alert("A new code has been sent to your email.");
+      } else {
+        console.error("Resend OTP error:", error);
+        alert("Failed to resend. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    } finally {
+      setResending(false);
     }
-
-    setResending(false);
   };
 
   return (
     <div className="auth-page">
       <div className="auth-left">
         <div className="auth-left-content">
-          <Link to="/" className="auth-brand">
-            ASIKA
-          </Link>
-          <h2 className="auth-left-title">
-            Check your
-            <br />
-            inbox.
-          </h2>
+          <Link to="/" className="auth-brand">ASIKA</Link>
+          <h2 className="auth-left-title">Check your<br />inbox.</h2>
           <p className="auth-left-sub">
-            Use the 6-digit code in the email, or just click the confirmation
-            link to activate your account.
+            We sent a 6-digit verification code to your email. Enter it below to activate your account.
           </p>
           <div className="auth-left-dots">
             <span className="auth-dot" />
@@ -163,8 +161,8 @@ const VerifyEmail = () => {
           <div className="auth-form-header">
             <h1 className="auth-title">Verify your email</h1>
             <p className="auth-subtitle">
-              Check <strong style={{ color: "#111" }}>{email}</strong> for a
-              verification email from Supabase.
+              A 6-digit code was sent to{" "}
+              <strong style={{ color: "#111" }}>{email}</strong>
             </p>
           </div>
 
@@ -173,19 +171,14 @@ const VerifyEmail = () => {
               <label className="auth-label">Verification Code</label>
               <input
                 className="auth-input auth-otp-input"
-                placeholder="Enter 6-digit code"
+                placeholder="• • • • • •"
                 value={otp}
-                onChange={(e) =>
-                  setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 maxLength={6}
                 inputMode="numeric"
                 autoComplete="one-time-code"
               />
-              <p className="auth-field-hint">
-                If you do not see a code, Supabase may have sent a confirmation
-                link instead. Check spam too.
-              </p>
+              <p className="auth-field-hint">Check your spam folder if you don't see it</p>
             </div>
 
             <button className="auth-btn" type="submit" disabled={loading}>
@@ -193,9 +186,7 @@ const VerifyEmail = () => {
                 <span className="auth-btn-loading">
                   <span className="auth-btn-spinner" /> Verifying...
                 </span>
-              ) : (
-                "Verify Email"
-              )}
+              ) : "Verify Email"}
             </button>
           </form>
 
@@ -206,19 +197,20 @@ const VerifyEmail = () => {
           </div>
 
           <p className="auth-switch">
-            Need another email?{" "}
+            Didn't receive a code?{" "}
             <button
               className="auth-resend-btn"
               type="button"
               onClick={handleResend}
               disabled={resending}
             >
-              {resending ? "Sending..." : "Resend verification"}
+              {resending ? "Sending..." : "Resend code"}
             </button>
           </p>
 
           <p className="auth-switch" style={{ marginTop: "12px" }}>
-            Wrong email? <Link to="/register">Go back</Link>
+            Wrong email?{" "}
+            <Link to="/Register">Go back</Link>
           </p>
         </div>
       </div>

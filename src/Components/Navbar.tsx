@@ -49,10 +49,21 @@ function Navbar() {
     let mounted = true;
 
     const syncUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        if (mounted) {
+          setUser(null);
+          setProfile(null);
+        }
+        return;
+      }
+
       const { data, error } = await supabase.auth.getUser();
 
       if (error) {
-        console.error("Failed to read auth user:", error.message);
         if (mounted) {
           setUser(null);
           setProfile(null);
@@ -131,13 +142,39 @@ function Navbar() {
     if (!confirm("Delete your account?")) return;
     if (!user) return;
 
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      alert("Your session has expired. Please log in again and try deleting your account.");
+      navigate("/login");
+      return;
+    }
+
     const { data, error } = await supabase.functions.invoke("delete-account", {
       body: {},
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
 
     if (error) {
-      console.error("Delete account failed:", error.message);
-      alert(`Delete account failed: ${error.message}`);
+      let details = error.message;
+
+      if ("context" in error && error.context instanceof Response) {
+        try {
+          const payload = await error.context.json();
+          if (payload?.error) {
+            details = payload.error;
+          }
+        } catch {
+          // Fall back to the original error message when the response body isn't JSON.
+        }
+      }
+
+      console.error("Delete account failed:", details);
+      alert(`Delete account failed: ${details}`);
       return;
     }
 

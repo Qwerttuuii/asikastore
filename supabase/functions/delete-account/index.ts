@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 serve(async (req) => {
@@ -59,6 +60,46 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    const { data: orders, error: ordersLookupError } = await adminClient
+      .from("orders")
+      .select("id")
+      .eq("customer_id", user.id);
+
+    if (ordersLookupError) {
+      return new Response(JSON.stringify({ error: `Failed to find orders: ${ordersLookupError.message}` }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const orderIds = (orders ?? []).map((order) => order.id);
+
+    if (orderIds.length > 0) {
+      const { error: orderItemsDeleteError } = await adminClient
+        .from("order_items")
+        .delete()
+        .in("order_id", orderIds);
+
+      if (orderItemsDeleteError) {
+        return new Response(JSON.stringify({ error: `Failed to delete order items: ${orderItemsDeleteError.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: ordersDeleteError } = await adminClient
+        .from("orders")
+        .delete()
+        .eq("customer_id", user.id);
+
+      if (ordersDeleteError) {
+        return new Response(JSON.stringify({ error: `Failed to delete orders: ${ordersDeleteError.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const { error: profileDeleteError } = await adminClient
