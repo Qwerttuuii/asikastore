@@ -5,7 +5,7 @@ const Contact = () => {
 
       <p>Email: support@asika.com</p>
       <p>Phone: +234 xxx xxx xxxx</p>
-      <p>Location: Lagos, Nigeria</p>
+      <p>Location: Abuja, Nigeria</p>
     </div>
   );
 };

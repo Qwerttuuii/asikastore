@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import toast from "react-hot-toast";
 import "./Auth.css";
 
 const Login = () => {
@@ -18,7 +19,7 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier || !password) {
-      alert("Fill all fields");
+      toast.error("Fill all fields.");
       return;
     }
 
@@ -35,7 +36,7 @@ const Login = () => {
           .single();
 
         if (error || !profile) {
-          alert("Username not found");
+          toast.error("Username not found.");
           setLoading(false);
           return;
         }
@@ -50,9 +51,9 @@ const Login = () => {
 
       if (error) {
         if (error.message.toLowerCase().includes("email not confirmed")) {
-          alert("Please verify your email first. Check your inbox for the confirmation code.");
+          toast.error("Please verify your email first. Check your inbox for the confirmation code.");
         } else {
-          alert(error.message);
+          toast.error(error.message);
         }
         setLoading(false);
         return;
@@ -61,7 +62,7 @@ const Login = () => {
       navigate("/");
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
+      toast.error("Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -69,12 +70,12 @@ const Login = () => {
 
   const handleForgotPassword = async () => {
     if (!identifier) {
-      alert("Enter your email address first.");
+      toast.error("Enter your email address first.");
       return;
     }
 
     if (!identifier.includes("@")) {
-      alert("Use your email address to reset your password.");
+      toast.error("Use your email address to reset your password.");
       return;
     }
 
@@ -86,16 +87,16 @@ const Login = () => {
       });
 
       if (error) {
-        alert(error.message);
+        toast.error(error.message);
         setResettingPassword(false);
         return;
       }
 
-      alert("Password reset email sent. Check your inbox.");
+      toast.success("Password reset email sent. Check your inbox.");
       navigate("/login?reset=sent", { replace: true });
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
+      toast.error("Something went wrong.");
     } finally {
       setResettingPassword(false);
     }

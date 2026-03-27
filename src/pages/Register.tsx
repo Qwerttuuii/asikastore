@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import toast from "react-hot-toast";
 import "./Auth.css";
 
 const Register = () => {
@@ -46,7 +47,7 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firstName || !lastName || !username || !email || !password) {
-      alert("Please fill all fields");
+      toast.error("Please fill all fields.");
       return;
     }
 
@@ -60,7 +61,7 @@ const Register = () => {
         .single();
 
       if (existingUser) {
-        alert("Username already taken");
+        toast.error("Username already taken.");
         setLoading(false);
         return;
       }
@@ -73,7 +74,7 @@ const Register = () => {
 
       if (otpError) {
         console.error("OTP save error:", otpError);
-        alert("Failed to generate verification code");
+        toast.error("Failed to generate verification code.");
         setLoading(false);
         return;
       }
@@ -81,7 +82,7 @@ const Register = () => {
       const sent = await sendOTPEmail(email, otp, firstName);
 
       if (!sent) {
-        alert("Failed to send verification email. Please try again.");
+        toast.error("Failed to send verification email. Please try again.");
         setLoading(false);
         return;
       }
@@ -91,7 +92,7 @@ const Register = () => {
       );
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
+      toast.error("Something went wrong.");
     } finally {
       setLoading(false);
     }

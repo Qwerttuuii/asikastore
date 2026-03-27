@@ -1,0 +1,101 @@
+.about-asika {
+  position: relative;
+  padding: 120px 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.about-asika__background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.about-asika__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.45;
+}
+
+.about-asika__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.about-asika__content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px;
+  text-align: center;
+}
+
+.about-asika__decoration {
+  color: #e8621a;           /* soft gold accent */
+  font-size: 14px;
+  letter-spacing: 6px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.about-asika__title {
+  font-size: 52px;
+  line-height: 1.1;
+  font-weight: 300;
+  color: #ffffff;
+  margin-bottom: 40px;
+}
+
+.about-asika__text {
+  max-width: 620px;
+  margin: 0 auto 50px;
+  color: #cccccc;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.about-asika__text p {
+  margin-bottom: 24px;
+}
+
+.about-asika__text p:last-child {
+  margin-bottom: 0;
+}
+
+.about-asika__button {
+  display: inline-block;
+  padding: 16px 48px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: #ffffff;
+  text-transform: uppercase;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-decoration: none;
+  transition: all 0.4s ease;
+}
+
+.about-asika__button:hover {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .about-asika {
+    padding: 80px 0;
+  }
+  
+  .about-asika__title {
+    font-size: 42px;
+  }
+  
+  .about-asika__content {
+    padding: 0 24px;
+  }
+}

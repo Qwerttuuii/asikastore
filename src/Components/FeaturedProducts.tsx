@@ -15,43 +15,39 @@ type Product = {
 
 function FeaturedProducts() {
   const flyToCart = (imageUrl: string) => {
+    const cart = document.getElementById("cart-icon");
+    if (!cart) return;
 
-  const cart = document.getElementById("cart-icon");
-  if (!cart) return;
+    const cartRect = cart.getBoundingClientRect();
 
-  const cartRect = cart.getBoundingClientRect();
+    const img = document.createElement("img");
+    img.src = imageUrl;
+    img.style.position = "fixed";
+    img.style.width = "80px";
+    img.style.height = "80px";
+    img.style.objectFit = "cover";
+    img.style.zIndex = "9999";
+    img.style.borderRadius = "10px";
+    img.style.left = "50%";
+    img.style.top = "50%";
+    img.style.transition = "all 0.8s ease";
 
-  const img = document.createElement("img");
-  img.src = imageUrl;
+    document.body.appendChild(img);
 
-  img.style.position = "fixed";
-  img.style.width = "80px";
-  img.style.height = "80px";
-  img.style.objectFit = "cover";
-  img.style.zIndex = "9999";
-  img.style.borderRadius = "10px";
-  img.style.left = "50%";
-  img.style.top = "50%";
-  img.style.transition = "all 0.8s ease";
+    setTimeout(() => {
+      img.style.left = cartRect.left + "px";
+      img.style.top = cartRect.top + "px";
+      img.style.width = "20px";
+      img.style.height = "20px";
+      img.style.opacity = "0.5";
+    }, 50);
 
-  document.body.appendChild(img);
-
-  setTimeout(() => {
-    img.style.left = cartRect.left + "px";
-    img.style.top = cartRect.top + "px";
-    img.style.width = "20px";
-    img.style.height = "20px";
-    img.style.opacity = "0.5";
-  }, 50);
-
-  setTimeout(() => {
-    img.remove();
-  }, 800);
-};
+    setTimeout(() => {
+      img.remove();
+    }, 800);
+  };
 
   const [products, setProducts] = useState<Product[]>([]);
-
-  // get refreshCart from context
   const { refreshCart } = useCart();
 
   useEffect(() => {
@@ -59,11 +55,7 @@ function FeaturedProducts() {
   }, []);
 
   const getProducts = async () => {
-
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .limit(4);
+    const { data, error } = await supabase.from("products").select("*").limit(4);
 
     if (error) {
       console.error("Error fetching products:", error);
@@ -76,7 +68,6 @@ function FeaturedProducts() {
   };
 
   const addToCart = async (productId: number) => {
-
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
 
@@ -85,7 +76,6 @@ function FeaturedProducts() {
       return;
     }
 
-    // Check if product already exists in cart
     const { data: existingItem } = await supabase
       .from("cart")
       .select("id, quantity")
@@ -94,12 +84,10 @@ function FeaturedProducts() {
       .maybeSingle();
 
     if (existingItem) {
-
-      // Increase quantity
       const { error } = await supabase
         .from("cart")
         .update({
-          quantity: existingItem.quantity + 1
+          quantity: existingItem.quantity + 1,
         })
         .eq("id", existingItem.id);
 
@@ -108,17 +96,12 @@ function FeaturedProducts() {
         toast.error("Failed to update cart");
         return;
       }
-
     } else {
-
-      // Insert new item
-      const { error } = await supabase
-        .from("cart")
-        .insert({
-          user_id: user.id,
-          product_id: productId,
-          quantity: 1
-        });
+      const { error } = await supabase.from("cart").insert({
+        user_id: user.id,
+        product_id: productId,
+        quantity: 1,
+      });
 
       if (error) {
         console.error(error);
@@ -127,62 +110,51 @@ function FeaturedProducts() {
       }
     }
 
-    toast.success("Added to cart ✓");
-
-    // refresh cart count + drawer
+    toast.success("Added to cart");
     refreshCart();
   };
 
   return (
     <section className="featured">
-
       <div className="featured-header">
-        <div>
-          <h2>Featured</h2>
-          <p>Our most-loved dresses</p>
+        <div className="featured-copy">
+          <span className="featured-kicker">Featured Collection</span>
+          <h2>Our Collection</h2>
+          <p>Your most loved dresses</p>
         </div>
 
         <Link to="/shop" className="view-all">
-          View All →
+          View All
         </Link>
       </div>
 
-      <div className="products-grid">
-
+      <div className="featured-grid">
         {products.map((product) => (
-          <div className="product-card" key={product.id}>
-
-            <Link to={`/product/${product.id}`}>
-
-              <div
-                className="product-img"
-                style={{
-                  backgroundImage: `url(${product.image})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center"
-                }}
-              />
-
+          <article className="featured-card" key={product.id}>
+            <Link to={`/product/${product.id}`} className="featured-link">
+              <div className="featured-image-wrap">
+                <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
+              </div>
             </Link>
 
-            <div
-              className="add-cart"
-             onClick={() => {
-            flyToCart(product.image);
-            addToCart(product.id);
-}}
+            <button
+              type="button"
+              className="featured-add-cart"
+              onClick={() => {
+                flyToCart(product.image);
+                addToCart(product.id);
+              }}
             >
               Add to Cart
+            </button>
+
+            <div className="featured-meta">
+              <h4>{product.name}</h4>
+              <p>N{product.price}</p>
             </div>
-
-            <h4>{product.name}</h4>
-            <p>₦{product.price}</p>
-
-          </div>
+          </article>
         ))}
-
       </div>
-
     </section>
   );
 }

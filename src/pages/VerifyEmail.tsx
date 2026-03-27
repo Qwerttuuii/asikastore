@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import "./Auth.css";
 
 const VerifyEmail = () => {
@@ -27,7 +28,7 @@ const VerifyEmail = () => {
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp || otp.length < 6) {
-      alert("Please enter the 6-digit code");
+      toast.error("Please enter the 6-digit code.");
       return;
     }
 
@@ -43,7 +44,7 @@ const VerifyEmail = () => {
 
       if (otpError || !otpRecords) {
         console.error("OTP lookup error:", otpError);
-        alert("Could not verify the code. Please try again.");
+        toast.error("Could not verify the code. Please try again.");
         setLoading(false);
         return;
       }
@@ -55,7 +56,7 @@ const VerifyEmail = () => {
       const isUsed = otpRecord?.used === true;
 
       if (!otpRecord || isUsed || isExpired) {
-        alert("Invalid or expired code. Please try again.");
+        toast.error("Invalid or expired code. Please try again.");
         setLoading(false);
         return;
       }
@@ -86,15 +87,16 @@ const VerifyEmail = () => {
           "error" in completeRegistrationData
             ? String(completeRegistrationData.error)
             : completeRegistrationError.message;
-        alert(functionMessage || "We could not finish creating your account. Please try again.");
+        toast.error(functionMessage || "We could not finish creating your account. Please try again.");
         setLoading(false);
         return;
       }
 
+      toast.success("Email verified successfully.");
       navigate("/login?verified=true");
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
+      toast.error("Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -112,7 +114,7 @@ const VerifyEmail = () => {
 
       if (insertError) {
         console.error("Resend OTP save error:", insertError);
-        alert("Failed to create a new code. Please try again.");
+        toast.error("Failed to create a new code. Please try again.");
         return;
       }
 
@@ -126,14 +128,14 @@ const VerifyEmail = () => {
       });
 
       if (!error) {
-        alert("A new code has been sent to your email.");
+        toast.success("A new code has been sent to your email.");
       } else {
         console.error("Resend OTP error:", error);
-        alert("Failed to resend. Please try again.");
+        toast.error("Failed to resend. Please try again.");
       }
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
+      toast.error("Something went wrong.");
     } finally {
       setResending(false);
     }

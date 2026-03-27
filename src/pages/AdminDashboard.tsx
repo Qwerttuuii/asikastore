@@ -16,6 +16,7 @@ import {
   FiSave,
 } from "react-icons/fi";
 import { supabase } from "../lib/supabase";
+import toast from "react-hot-toast";
 import "./AdminDashboard.css";
 
 const BUCKET = "asika storeage"; // your exact bucket name
@@ -53,7 +54,7 @@ export default function AdminDashboard() {
 
       const normalizedRole = data?.role?.toString().trim().toLowerCase();
       if (normalizedRole !== "admin") {
-        alert("Access denied");
+        toast.error("Access denied.");
         window.location.href = "/";
         return;
       }

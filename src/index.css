@@ -39,3 +39,34 @@ textarea,
 select {
   font: inherit;
 }
+
+.asika-toast {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.asika-inline-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.asika-inline-loader::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(232, 98, 26, 0.2);
+  border-top-color: #e8621a;
+  animation: asika-spin 0.7s linear infinite;
+}
+
+@keyframes asika-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

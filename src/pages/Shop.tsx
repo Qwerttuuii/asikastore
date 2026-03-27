@@ -66,7 +66,7 @@ export default function Shop() {
           <p className="shop-subtitle">CURATED COLLECTION</p>
           <h1>The Shop</h1>
           <p className="shop-desc">
-            Discover timeless silhouettes crafted with intention —
+            Discover timeless silhouettes crafted with intention 
             from effortless day dresses to statement evening wear.
           </p>
         </div>

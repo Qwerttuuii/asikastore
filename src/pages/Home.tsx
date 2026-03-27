@@ -1,14 +1,18 @@
 import Hero from "../Components/Hero";
+import CollectionShowcase from "../Components/CollectionShowcase";
 import FeaturedProducts from "../Components/FeaturedProducts";
-import ShippingBanner from "../Components/ShippingBanner";
 import Footer from "../Components/Footer";
+import AboutAsika from "../Components/AboutAsika";
+import NewsletterSignup from "../Components/NewsletterSignup";
 
 function Home() {
   return (
     <>
       <Hero />
       <FeaturedProducts />
-      <ShippingBanner />
+      <CollectionShowcase />
+      <AboutAsika />
+      <NewsletterSignup />
       <Footer />
     </>
   );

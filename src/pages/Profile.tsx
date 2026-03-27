@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import { supabase } from "../lib/supabase";
+import toast from "react-hot-toast";
 import "./Profile.css";
 import Footer from "../Components/Footer";
 
@@ -64,8 +65,9 @@ export default function Profile() {
 
     if (!error) {
       setEditing(false);
+      toast.success("Profile updated successfully.");
     } else {
-      alert(error.message);
+      toast.error(error.message);
     }
 
     setSaving(false);

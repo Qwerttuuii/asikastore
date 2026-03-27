@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { supabase } from "../lib/supabase";
+import toast from "react-hot-toast";
 import "./Auth.css";
 
 const ResetPassword = () => {
@@ -85,17 +86,17 @@ const ResetPassword = () => {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
-      alert("Fill all fields");
+      toast.error("Fill all fields.");
       return;
     }
 
     if (password.length < 6) {
-      alert("Password must be at least 6 characters.");
+      toast.error("Password must be at least 6 characters.");
       return;
     }
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
 
@@ -105,17 +106,17 @@ const ResetPassword = () => {
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        alert(error.message);
+        toast.error(error.message);
         setLoading(false);
         return;
       }
 
-      alert("Your password has been updated. Please sign in.");
+      toast.success("Your password has been updated. Please sign in.");
       await supabase.auth.signOut();
       navigate("/login");
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
+      toast.error("Something went wrong.");
     } finally {
       setLoading(false);
     }

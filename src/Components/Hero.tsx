@@ -1,11 +1,9 @@
+import { Link } from "react-router-dom";
 import "./Hero.css";
 
 function Hero() {
   return (
     <section className="hero">
-
-      {/* You will add the background image in CSS */}
-
       <div className="hero-content">
         <p className="hero-subtitle">NEW COLLECTION</p>
 
@@ -19,11 +17,10 @@ function Hero() {
           Discover your perfect look.
         </p>
 
-        <button className="hero-btn">
-          Shop Now →
-        </button>
+        <Link to="/shop" className="hero-btn">
+          Shop Now
+        </Link>
       </div>
-
     </section>
   );
 }

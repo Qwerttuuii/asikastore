@@ -68,7 +68,7 @@ export default function ProductCard({ product }: Props) {
 <Link to={`/product/${product.id}`} className="product-link">
 
   <div className="product-image">
-    <img src={product.image} alt={product.name} />
+    <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
   </div>
 
 </Link>

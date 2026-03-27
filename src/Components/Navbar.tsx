@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiSearch, FiShoppingBag, FiUser, FiX, FiMenu } from "react-icons/fi";
 import CartDrawer from "./CartDrawer";
 import { useCart } from "../context/CartContext";
 import { supabase } from "../lib/supabase";
+import toast from "react-hot-toast";
 import "./Navbar.css";
 
 type Profile = {
@@ -23,6 +24,7 @@ function Navbar() {
 
   const { cart } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const menuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -130,7 +132,7 @@ function Navbar() {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      alert("Logout failed. Please try again.");
+      toast.error("Logout failed. Please try again.");
       return;
     }
     navigate("/login");
@@ -147,7 +149,7 @@ function Navbar() {
     } = await supabase.auth.getSession();
 
     if (!session?.access_token) {
-      alert("Your session has expired. Please log in again and try deleting your account.");
+      toast.error("Your session has expired. Please log in again and try deleting your account.");
       navigate("/login");
       return;
     }
@@ -174,13 +176,13 @@ function Navbar() {
       }
 
       console.error("Delete account failed:", details);
-      alert(`Delete account failed: ${details}`);
+      toast.error(`Delete account failed: ${details}`);
       return;
     }
 
     if (data?.error) {
       console.error("Delete account failed:", data.error);
-      alert(`Delete account failed: ${data.error}`);
+      toast.error(`Delete account failed: ${data.error}`);
       return;
     }
 
@@ -189,6 +191,7 @@ function Navbar() {
     setProfile(null);
     setShowMenu(false);
     closeMobile();
+    toast.success("Your account has been deleted.");
     navigate("/");
   };
 
@@ -206,10 +209,11 @@ function Navbar() {
 
   const normalizedRole = profile?.role?.toString().trim().toLowerCase();
   const isAdmin = normalizedRole === "admin";
+  const isHomePage = location.pathname === "/";
 
   return (
     <>
-      <nav className="navbar">
+      <nav className={`navbar ${isHomePage ? "navbar-home" : "navbar-solid"}`}>
         <div className="nav-logo">
           <Link to="/">ASIKA</Link>
         </div>

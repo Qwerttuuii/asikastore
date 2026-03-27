@@ -4,6 +4,7 @@ import Footer from "../Components/Footer";
 import { PaystackButton } from "react-paystack";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import "./Checkout.css";
 
 export default function Checkout() {
@@ -27,7 +28,7 @@ export default function Checkout() {
       const { data } = await supabase.auth.getUser();
 
       if (!data.user) {
-        alert("Please login to continue");
+        toast.error("Please login to continue.");
         navigate("/login");
         return;
       }
@@ -76,7 +77,7 @@ export default function Checkout() {
     setErrors(newErrors);
 
     if (cart.length === 0) {
-      alert("Your cart is empty");
+      toast.error("Your cart is empty.");
       return false;
     }
 
@@ -95,7 +96,7 @@ export default function Checkout() {
   };
 
   const handleClose = () => {
-    alert("Transaction cancelled");
+    toast("Transaction cancelled.", { icon: "•" });
   };
 
   const handleSuccess = async (reference: any) => {
@@ -120,7 +121,7 @@ export default function Checkout() {
       const verifyData = await verify.json();
 
       if (verifyData?.data?.status !== "success") {
-        alert("Payment verification failed");
+        toast.error("Payment verification failed.");
         return;
       }
 
@@ -130,7 +131,7 @@ export default function Checkout() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        alert("User not found");
+        toast.error("User not found.");
         return;
       }
 
@@ -158,7 +159,7 @@ export default function Checkout() {
         .single();
 
       if (orderError) {
-        alert(orderError.message);
+        toast.error(orderError.message);
         return;
       }
 
@@ -180,7 +181,7 @@ export default function Checkout() {
 
     } catch (err) {
       console.error(err);
-      alert("Checkout failed");
+      toast.error("Checkout failed.");
     } finally {
       setLoading(false);
     }
@@ -269,7 +270,7 @@ export default function Checkout() {
                   ← Back
                 </button>
 
-                {loading && <p>Processing...</p>}
+                {loading && <p className="asika-inline-loader">Processing payment...</p>}
 
                 <PaystackButton
                   {...paystackConfig}

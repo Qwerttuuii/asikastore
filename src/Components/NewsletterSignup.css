@@ -1,0 +1,130 @@
+.newsletter {
+  background: #000;
+  padding: 100px 40px;
+  text-align: center;
+  border-top: 1px solid #222;
+}
+
+.newsletter__content {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.newsletter__decoration {
+  color: #e8621a;
+  font-size: 14px;
+  letter-spacing: 6px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.newsletter__title {
+  font-size: 42px;
+  line-height: 1.1;
+  font-weight: 300;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.newsletter__subtitle {
+  color: #cccccc;
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.newsletter__form {
+  display: flex;
+  gap: 12px;
+  max-width: 460px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.newsletter__input {
+  flex: 1;
+  min-width: 280px;
+  padding: 16px 20px;
+  background: #111;
+  border: 1px solid #333;
+  color: #ffffff;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.3s ease;
+}
+
+.newsletter__input:focus {
+  border-color: #e8621a;
+}
+
+.newsletter__input::placeholder {
+  color: #666;
+}
+
+.newsletter__button {
+  min-height: 56px;
+  padding: 16px 34px;
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  white-space: nowrap;
+}
+
+.newsletter__button:hover:not(:disabled) {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.newsletter__button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.newsletter__message {
+  margin-top: 20px;
+  font-size: 15px;
+}
+
+.newsletter__message.success {
+  color: #4ade80;
+}
+
+.newsletter__message.error {
+  color: #e8621a;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .newsletter {
+    padding: 80px 24px;
+  }
+  
+  .newsletter__title {
+    font-size: 36px;
+  }
+  
+  .newsletter__form {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .newsletter__input {
+    min-width: 100%;
+  }
+}

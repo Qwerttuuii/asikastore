@@ -1,22 +1,25 @@
 .hero {
-  height: 90vh;
+  min-height: 100vh;
+  height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 120px 20px 72px;
 
-  background-image: url("/hero.png");
+  background-image: url("/asikahero.avif");
   background-size: cover;
-  background-position: center;
+  background-position: center center;
+  background-repeat: no-repeat;
 
   position: relative;
+  box-sizing: border-box;
 }
 
-/* Dark overlay */
 .hero::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.26) 52%, rgba(0, 0, 0, 0.34) 100%);
 }
 
 .hero-content {
@@ -29,42 +32,101 @@
 }
 
 .hero-subtitle {
+  opacity: 0;
+  transform: translateY(32px);
+  animation: heroFadeInSoft 0.9s ease-out 0.12s forwards;
   letter-spacing: 4px;
   font-size: 13px;
   margin-bottom: 20px;
-  opacity: 0.9;
 }
 
 .hero h1 {
+  opacity: 0;
+  transform: translateY(32px);
+  animation: heroFadeIn 0.9s ease-out 0.28s forwards;
   font-size: 64px;
   line-height: 1.2;
   margin-bottom: 20px;
 }
 
 .hero-text {
+  opacity: 0;
+  transform: translateY(32px);
+  animation: heroFadeIn 0.9s ease-out 0.44s forwards;
   font-size: 18px;
   margin-bottom: 30px;
 }
 
 .hero-btn {
-  background: white;
-  color: black;
-  padding: 14px 32px;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s;
+  opacity: 0;
+  transform: translateY(32px);
+  animation: heroFadeIn 0.9s ease-out 0.6s forwards;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 190px;
+  padding: 15px 34px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.14);
+  color: white;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  font-size: 14px;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
 }
 
 .hero-btn:hover {
-  background: #f2f2f2;
+  background: white;
+  color: black;
+  border-color: white;
+  transform: translateY(-2px);
+}
+
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroFadeInSoft {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-subtitle,
+  .hero h1,
+  .hero-text,
+  .hero-btn {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
 }
 
 @media (max-width: 768px) {
   .hero {
-    min-height: 70vh;
+    min-height: 100vh;
     height: auto;
-    padding: 96px 0 72px;
+    padding: 110px 16px 64px;
+    background-position: center top;
   }
 
   .hero-subtitle {

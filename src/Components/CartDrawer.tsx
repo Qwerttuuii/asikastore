@@ -1,6 +1,7 @@
 import { useCart } from "../context/CartContext";
 import { FiX } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import "./CartDrawer.css";
 
 type Props = {
@@ -19,7 +20,7 @@ function CartDrawer({ isOpen, setIsOpen }: Props) {
 
   const handleCheckout = () => {
     if (cart.length === 0) {
-      alert("Your cart is empty");
+      toast.error("Your cart is empty.");
       return;
     }
 
