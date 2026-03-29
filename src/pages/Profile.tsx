@@ -1,10 +1,18 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import { supabase } from "../lib/supabase";
 import toast from "react-hot-toast";
+import { useSeo } from "../lib/useSeo";
 import "./Profile.css";
 import Footer from "../Components/Footer";
 
 export default function Profile() {
+  useSeo({
+    title: "My Profile | ASIKA",
+    description: "Manage your ASIKA profile details.",
+    path: "/profile",
+    robots: "noindex, nofollow",
+  });
+
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);

@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { Link } from "react-router-dom";
+import { useSeo } from "../lib/useSeo";
 import "./Orders.css";
 
 const Orders = () => {
+  useSeo({
+    title: "My Orders | ASIKA",
+    description: "View your ASIKA order history.",
+    path: "/orders",
+    robots: "noindex, nofollow",
+  });
+
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());

@@ -3,9 +3,17 @@ import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { supabase } from "../lib/supabase";
 import toast from "react-hot-toast";
+import { useSeo } from "../lib/useSeo";
 import "./Auth.css";
 
 const ResetPassword = () => {
+  useSeo({
+    title: "Reset Password | ASIKA",
+    description: "Reset your ASIKA account password.",
+    path: "/reset-password",
+    robots: "noindex, nofollow",
+  });
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);

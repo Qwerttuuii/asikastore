@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase"
 import Footer from "../Components/Footer"
 import ProductCard from "../Components/ProductCard"
 import { useCart } from "../context/CartContext"
+import { useSeo } from "../lib/useSeo"
 import "./ProductDetails.css"
 
 type Product = {
@@ -25,6 +26,15 @@ export default function ProductDetails() {
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [addingToCart, setAddingToCart] = useState(false)
+
+  useSeo({
+    title: product ? `${product.name} | ASIKA` : "Product Details | ASIKA",
+    description: product?.description?.trim()
+      ? product.description
+      : "View product details, pricing, and related styles from ASIKA's collection.",
+    path: `/product/${id || ""}`,
+    image: product?.image || "/asika-logo.jpeg",
+  });
 
   useEffect(() => {
     if (id) {

@@ -1,22 +1,55 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useSeo } from "../lib/useSeo";
 import "./Auth.css";
 
+type PendingRegistration = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  password: string;
+};
+
+const getPendingRegistration = (): PendingRegistration | null => {
+  const rawPending = sessionStorage.getItem("asika_pending_registration");
+  if (!rawPending) return null;
+
+  try {
+    return JSON.parse(rawPending) as PendingRegistration;
+  } catch {
+    sessionStorage.removeItem("asika_pending_registration");
+    return null;
+  }
+};
+
 const VerifyEmail = () => {
+  useSeo({
+    title: "Verify Email | ASIKA",
+    description: "Verify your ASIKA account email address.",
+    path: "/verify-email",
+    robots: "noindex, nofollow",
+  });
+
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [searchParams] = useSearchParams();
 
   const email = searchParams.get("email") || "";
-  const firstName = searchParams.get("firstName") || "";
-  const lastName = searchParams.get("lastName") || "";
-  const username = searchParams.get("username") || "";
-  const password = searchParams.get("password") || "";
+
+  const pendingRegistration = useMemo(() => getPendingRegistration(), []);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!email || !pendingRegistration || pendingRegistration.email !== email) {
+      toast.error("Registration session expired. Please sign up again.");
+      navigate("/register", { replace: true });
+    }
+  }, [email, pendingRegistration, navigate]);
 
   const buildOtpPayload = (code: string) => ({
     email,
@@ -35,46 +68,22 @@ const VerifyEmail = () => {
     setLoading(true);
 
     try {
-      const { data: otpRecords, error: otpError } = await supabase
-        .from("otp_codes")
-        .select("*")
-        .eq("email", email)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (otpError || !otpRecords) {
-        console.error("OTP lookup error:", otpError);
-        toast.error("Could not verify the code. Please try again.");
-        setLoading(false);
+      if (!pendingRegistration || pendingRegistration.email !== email) {
+        toast.error("Registration session expired. Please sign up again.");
+        navigate("/register");
         return;
       }
-
-      const otpRecord = otpRecords.find((record) => String(record.code) === otp);
-      const isExpired =
-        otpRecord?.expires_at != null &&
-        new Date(otpRecord.expires_at).getTime() < Date.now();
-      const isUsed = otpRecord?.used === true;
-
-      if (!otpRecord || isUsed || isExpired) {
-        toast.error("Invalid or expired code. Please try again.");
-        setLoading(false);
-        return;
-      }
-
-      await supabase
-        .from("otp_codes")
-        .update({ used: true })
-        .eq("id", otpRecord.id);
 
       const { data: completeRegistrationData, error: completeRegistrationError } = await supabase.functions.invoke(
         "complete-registration",
         {
           body: {
             email,
-            password,
-            firstName,
-            lastName,
-            username,
+            password: pendingRegistration.password,
+            firstName: pendingRegistration.firstName,
+            lastName: pendingRegistration.lastName,
+            username: pendingRegistration.username,
+            otp,
           },
         },
       );
@@ -93,6 +102,7 @@ const VerifyEmail = () => {
       }
 
       toast.success("Email verified successfully.");
+      sessionStorage.removeItem("asika_pending_registration");
       navigate("/login?verified=true");
     } catch (err) {
       console.error(err);
@@ -122,7 +132,7 @@ const VerifyEmail = () => {
         body: {
           email,
           otp: newOtp,
-          name: firstName,
+          name: pendingRegistration?.firstName || "",
           subject: "Your new ASIKA verification code",
         },
       });

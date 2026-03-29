@@ -14,20 +14,31 @@ import {
   FiImage,
   FiFileText,
   FiSave,
+  FiMenu,
+  FiX,
 } from "react-icons/fi";
 import { supabase } from "../lib/supabase";
 import toast from "react-hot-toast";
+import { useSeo } from "../lib/useSeo";
 import "./AdminDashboard.css";
 
 const BUCKET = "asika storeage"; // your exact bucket name
 
 export default function AdminDashboard() {
+  useSeo({
+    title: "Admin Dashboard | ASIKA",
+    description: "ASIKA admin operations dashboard.",
+    path: "/admin",
+    robots: "noindex, nofollow",
+  });
+
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [tab, setTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ADD PRODUCT FORM STATE
   const [showAddForm, setShowAddForm] = useState(false);
@@ -184,6 +195,12 @@ export default function AdminDashboard() {
     { key: "customers", label: "Customers", icon: <FiUsers size={16} /> },
   ];
 
+  const selectTab = (nextTab: string) => {
+    setTab(nextTab);
+    setShowAddForm(false);
+    setSidebarOpen(false);
+  };
+
   if (loading) {
     return (
       <div className="adm-loading">
@@ -195,9 +212,15 @@ export default function AdminDashboard() {
 
   return (
     <div className="adm-shell">
+      <button
+        className={`adm-mobile-backdrop ${sidebarOpen ? "open" : ""}`}
+        type="button"
+        aria-label="Close menu"
+        onClick={() => setSidebarOpen(false)}
+      />
 
       {/* ── SIDEBAR ── */}
-      <aside className="adm-sidebar">
+      <aside className={`adm-sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="adm-sidebar-logo">
           <Link to="/">ASIKA</Link>
         </div>
@@ -206,7 +229,7 @@ export default function AdminDashboard() {
             <button
               key={item.key}
               className={`adm-nav-item ${tab === item.key && !showAddForm ? "active" : ""}`}
-              onClick={() => { setTab(item.key); setShowAddForm(false); }}
+              onClick={() => selectTab(item.key)}
             >
               <span className="adm-nav-icon">{item.icon}</span>
               {item.label}
@@ -224,6 +247,17 @@ export default function AdminDashboard() {
 
       {/* ── MAIN ── */}
       <main className="adm-main">
+        <div className="adm-mobile-topbar">
+          <button
+            className="adm-mobile-menu-btn"
+            type="button"
+            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+            onClick={() => setSidebarOpen((prev) => !prev)}
+          >
+            {sidebarOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+          </button>
+          <p className="adm-mobile-title">Admin Panel</p>
+        </div>
 
         {/* ── ADD PRODUCT FORM ── */}
         {showAddForm && (
@@ -574,3 +608,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

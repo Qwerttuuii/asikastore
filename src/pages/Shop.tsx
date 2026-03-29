@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase"
 import ProductCard from "../Components/ProductCard"
 import Footer from "../Components/Footer"
 import { useLocation, useNavigate } from "react-router-dom";
+import { useSeo } from "../lib/useSeo";
 import "./Shop.css"
 
 type Product = {
@@ -23,6 +24,14 @@ export default function Shop() {
 
   const query = new URLSearchParams(location.search);
   const search = query.get("search")?.toLowerCase() || "";
+
+  useSeo({
+    title: "Shop Dresses | ASIKA Collection",
+    description:
+      "Browse ASIKA's curated dress collection including casual, midi, maxi, and evening dresses.",
+    path: "/shop",
+    image: "/shop.avif",
+  });
 
   useEffect(() => {
     getProducts()

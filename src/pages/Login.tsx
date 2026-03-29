@@ -3,9 +3,17 @@ import { supabase } from "../lib/supabase";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import toast from "react-hot-toast";
+import { useSeo } from "../lib/useSeo";
 import "./Auth.css";
 
 const Login = () => {
+  useSeo({
+    title: "Sign In | ASIKA",
+    description: "Sign in to your ASIKA account.",
+    path: "/login",
+    robots: "noindex, nofollow",
+  });
+
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

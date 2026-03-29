@@ -1,4 +1,14 @@
+import { useSeo } from "../lib/useSeo";
+
 const About = () => {
+  useSeo({
+    title: "About ASIKA | Modern Feminine Fashion",
+    description:
+      "Learn about ASIKA, a modern fashion brand creating elegant, feminine dresses for every occasion.",
+    path: "/about",
+    image: "/about-asika.jpg",
+  });
+
   return (
     <div style={{ padding: "120px 20px", textAlign: "center" }}>
       <h1>About ASIKA</h1>

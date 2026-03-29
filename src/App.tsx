@@ -28,7 +28,8 @@ function App() {
     pathname === "/register" ||
     pathname === "/admin" ||
     pathname === "/verify-email" ||
-    pathname === "/reset-password";
+    pathname === "/reset-password" ||
+    pathname === "/order-success";
 
   return (
     <>

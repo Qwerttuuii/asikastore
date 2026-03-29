@@ -13,6 +13,7 @@ type CompleteRegistrationRequest = {
   firstName?: string;
   lastName?: string;
   username?: string;
+  otp?: string;
 };
 
 serve(async (req) => {
@@ -38,10 +39,10 @@ serve(async (req) => {
       });
     }
 
-    const { email, password, firstName, lastName, username }: CompleteRegistrationRequest =
+    const { email, password, firstName, lastName, username, otp }: CompleteRegistrationRequest =
       await req.json();
 
-    if (!email || !password || !firstName || !lastName || !username) {
+    if (!email || !password || !firstName || !lastName || !username || !otp) {
       return new Response(JSON.stringify({ error: "Missing required registration fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -49,6 +50,37 @@ serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    const { data: otpRecord, error: otpLookupError } = await adminClient
+      .from("otp_codes")
+      .select("id, used, expires_at")
+      .eq("email", email)
+      .eq("code", otp)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (otpLookupError) {
+      return new Response(JSON.stringify({ error: otpLookupError.message }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!otpRecord || otpRecord.used) {
+      return new Response(JSON.stringify({ error: "Invalid verification code" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const isExpired = otpRecord.expires_at && new Date(otpRecord.expires_at).getTime() < Date.now();
+    if (isExpired) {
+      return new Response(JSON.stringify({ error: "Verification code has expired" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const { data: existingProfile, error: profileLookupError } = await adminClient
       .from("profiles")
@@ -120,6 +152,18 @@ serve(async (req) => {
         });
       }
 
+      const { error: otpUpdateError } = await adminClient
+        .from("otp_codes")
+        .update({ used: true })
+        .eq("id", otpRecord.id);
+
+      if (otpUpdateError) {
+        return new Response(JSON.stringify({ error: otpUpdateError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(JSON.stringify({ success: true, userId: existingUserId }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -155,6 +199,18 @@ serve(async (req) => {
 
     if (profileInsertError) {
       return new Response(JSON.stringify({ error: profileInsertError.message }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { error: otpUpdateError } = await adminClient
+      .from("otp_codes")
+      .update({ used: true })
+      .eq("id", otpRecord.id);
+
+    if (otpUpdateError) {
+      return new Response(JSON.stringify({ error: otpUpdateError.message }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

@@ -3,9 +3,17 @@ import { supabase } from "../lib/supabase";
 import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import toast from "react-hot-toast";
+import { useSeo } from "../lib/useSeo";
 import "./Auth.css";
 
 const Register = () => {
+  useSeo({
+    title: "Create Account | ASIKA",
+    description: "Create your ASIKA account to shop and track orders.",
+    path: "/register",
+    robots: "noindex, nofollow",
+  });
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
@@ -87,9 +95,18 @@ const Register = () => {
         return;
       }
 
-      navigate(
-        `/verify-email?email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+      sessionStorage.setItem(
+        "asika_pending_registration",
+        JSON.stringify({
+          email,
+          firstName,
+          lastName,
+          username,
+          password,
+        }),
       );
+
+      navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong.");
