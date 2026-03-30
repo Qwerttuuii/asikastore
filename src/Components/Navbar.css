@@ -603,6 +603,10 @@
     display: none;
   }
 
+  .profile-wrapper {
+    display: none;
+  }
+
   .search-overlay {
     padding: 0 5%;
   }
