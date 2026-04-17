@@ -8,7 +8,7 @@ const AboutAsika: React.FC = () => {
       {/* Background Image Container */}
       <div className="about-asika__background">
         <img 
-          src="/about-asika.jpg"    
+          src="/about-asika.avif"    
           alt="Asika Brand Story" 
           className="about-asika__image"
         />
