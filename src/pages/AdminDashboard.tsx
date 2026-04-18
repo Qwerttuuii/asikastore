@@ -22,7 +22,7 @@ import toast from "react-hot-toast";
 import { useSeo } from "../lib/useSeo";
 import "./AdminDashboard.css";
 
-const BUCKET = "asika storeage"; // your exact bucket name
+const BUCKET = "asika storeage";
 
 export default function AdminDashboard() {
   useSeo({
@@ -51,6 +51,10 @@ export default function AdminDashboard() {
   const [formImagePreview, setFormImagePreview] = useState<string>("");
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState("");
+
+  // SIZES STATE
+  const [sizeInput, setSizeInput] = useState("");
+  const [formSizes, setFormSizes] = useState<string[]>([]);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -106,6 +110,19 @@ export default function AdminDashboard() {
     setFormImagePreview(URL.createObjectURL(file));
   };
 
+  // SIZE HELPERS
+  const addSize = () => {
+    const trimmed = sizeInput.trim();
+    if (!trimmed) return;
+    if (formSizes.includes(trimmed)) { setSizeInput(""); return; }
+    setFormSizes([...formSizes, trimmed]);
+    setSizeInput("");
+  };
+
+  const removeSize = (size: string) => {
+    setFormSizes(formSizes.filter((s) => s !== size));
+  };
+
   const resetForm = () => {
     setFormName("");
     setFormPrice("");
@@ -115,20 +132,19 @@ export default function AdminDashboard() {
     setFormImageFile(null);
     setFormImagePreview("");
     setFormError("");
+    setFormSizes([]);
+    setSizeInput("");
   };
 
   const handleSaveProduct = async () => {
     setFormError("");
-
     if (!formName.trim()) { setFormError("Product name is required."); return; }
     if (!formPrice || isNaN(Number(formPrice))) { setFormError("Valid price is required."); return; }
     if (!formCategory) { setFormError("Please select a category."); return; }
     if (!formImageFile) { setFormError("Please upload a product image."); return; }
 
     setFormSaving(true);
-
     try {
-      // STEP 1: Upload image to Supabase Storage
       const fileExt = formImageFile.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
 
@@ -142,20 +158,16 @@ export default function AdminDashboard() {
         return;
       }
 
-      // STEP 2: Get public URL
-      const { data: urlData } = supabase.storage
-        .from(BUCKET)
-        .getPublicUrl(fileName);
-
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
       const imageUrl = urlData.publicUrl;
 
-      // STEP 3: Save product to DB
       const { error: insertError } = await supabase.from("products").insert({
         name: formName.trim(),
         price: Number(formPrice),
         Category: formCategory,
         description: formDescription.trim(),
         image: imageUrl,
+        sizes: formSizes,  // ✅ save sizes array
       });
 
       if (insertError) {
@@ -164,16 +176,14 @@ export default function AdminDashboard() {
         return;
       }
 
-      // SUCCESS
       resetForm();
       setShowAddForm(false);
       setTab("products");
       fetchData();
-
+      toast.success("Product added successfully!");
     } catch (err) {
       setFormError("Something went wrong. Please try again.");
     }
-
     setFormSaving(false);
   };
 
@@ -219,7 +229,7 @@ export default function AdminDashboard() {
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* ── SIDEBAR ── */}
+      {/* SIDEBAR */}
       <aside className={`adm-sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="adm-sidebar-logo">
           <Link to="/">ASIKA</Link>
@@ -245,7 +255,7 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* ── MAIN ── */}
+      {/* MAIN */}
       <main className="adm-main">
         <div className="adm-mobile-topbar">
           <button
@@ -259,7 +269,7 @@ export default function AdminDashboard() {
           <p className="adm-mobile-title">Admin Panel</p>
         </div>
 
-        {/* ── ADD PRODUCT FORM ── */}
+        {/* ADD PRODUCT FORM */}
         {showAddForm && (
           <>
             <div className="adm-form-header">
@@ -273,22 +283,17 @@ export default function AdminDashboard() {
             </div>
 
             <div className="adm-form-card">
-              {/* ORANGE TOP ACCENT */}
               <div className="adm-form-accent" />
-
               <div className="adm-form-body">
+
                 {/* PRODUCT NAME */}
                 <div className="adm-field">
                   <label className="adm-label">
                     <FiTag size={14} className="adm-label-icon adm-label-orange" />
                     Product Name <span className="adm-required">*</span>
                   </label>
-                  <input
-                    className="adm-input"
-                    placeholder="e.g. Satin Slip Dress"
-                    value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                  />
+                  <input className="adm-input" placeholder="e.g. Satin Slip Dress"
+                    value={formName} onChange={(e) => setFormName(e.target.value)} />
                 </div>
 
                 {/* PRICE + CATEGORY */}
@@ -298,26 +303,17 @@ export default function AdminDashboard() {
                       <span className="adm-label-currency">₦</span>
                       Price <span className="adm-required">*</span>
                     </label>
-                    <input
-                      className="adm-input"
-                      type="number"
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                      value={formPrice}
-                      onChange={(e) => setFormPrice(e.target.value)}
-                    />
+                    <input className="adm-input" type="number" placeholder="0.00"
+                      min="0" step="0.01" value={formPrice}
+                      onChange={(e) => setFormPrice(e.target.value)} />
                   </div>
                   <div className="adm-field">
                     <label className="adm-label">
                       <FiPackage size={14} className="adm-label-icon adm-label-orange" />
                       Category <span className="adm-required">*</span>
                     </label>
-                    <select
-                      className="adm-input adm-select"
-                      value={formCategory}
-                      onChange={(e) => setFormCategory(e.target.value)}
-                    >
+                    <select className="adm-input adm-select" value={formCategory}
+                      onChange={(e) => setFormCategory(e.target.value)}>
                       <option value="">Select category</option>
                       <option value="casual">Casual Dresses</option>
                       <option value="evening">Evening Dresses</option>
@@ -325,6 +321,41 @@ export default function AdminDashboard() {
                       <option value="maxi">Maxi Dresses</option>
                     </select>
                   </div>
+                </div>
+
+                {/* ✅ SIZES FIELD */}
+                <div className="adm-field">
+                  <label className="adm-label">
+                    <FiTag size={14} className="adm-label-icon adm-label-orange" />
+                    Available Sizes
+                  </label>
+                  <div className="adm-size-input-row">
+                    <input
+                      className="adm-input"
+                      placeholder="e.g. 0, 2, 4, 6, 8, 10, 12..."
+                      value={sizeInput}
+                      onChange={(e) => setSizeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") { e.preventDefault(); addSize(); }
+                      }}
+                    />
+                    <button type="button" className="adm-size-add-btn" onClick={addSize}>
+                      <FiPlus size={15} /> Add
+                    </button>
+                  </div>
+                  <p className="adm-field-hint">Type a size and press Add or Enter. Repeat for each size.</p>
+                  {formSizes.length > 0 && (
+                    <div className="adm-size-tags">
+                      {formSizes.map((size) => (
+                        <span key={size} className="adm-size-tag">
+                          {size}
+                          <button type="button" onClick={() => removeSize(size)}>
+                            <FiX size={11} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* IMAGE UPLOAD */}
@@ -343,18 +374,11 @@ export default function AdminDashboard() {
                         <p className="adm-upload-hint">JPG, PNG, WEBP supported</p>
                       </div>
                     )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      style={{ display: "none" }}
-                    />
+                    <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: "none" }} />
                   </label>
                   {formImagePreview && (
-                    <button
-                      className="adm-remove-image"
-                      onClick={() => { setFormImageFile(null); setFormImagePreview(""); }}
-                    >
+                    <button className="adm-remove-image"
+                      onClick={() => { setFormImageFile(null); setFormImagePreview(""); }}>
                       Remove image
                     </button>
                   )}
@@ -366,13 +390,8 @@ export default function AdminDashboard() {
                     <FiFileText size={14} className="adm-label-icon adm-label-orange" />
                     Description
                   </label>
-                  <textarea
-                    className="adm-input adm-textarea"
-                    placeholder="Describe your product..."
-                    value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                    rows={4}
-                  />
+                  <textarea className="adm-input adm-textarea" placeholder="Describe your product..."
+                    value={formDescription} onChange={(e) => setFormDescription(e.target.value)} rows={4} />
                 </div>
 
                 {/* IN STOCK TOGGLE */}
@@ -382,36 +401,23 @@ export default function AdminDashboard() {
                     <p className="adm-toggle-hint">Product is available for purchase</p>
                   </div>
                   <label className="adm-toggle">
-                    <input
-                      type="checkbox"
-                      checked={formInStock}
-                      onChange={(e) => setFormInStock(e.target.checked)}
-                    />
+                    <input type="checkbox" checked={formInStock}
+                      onChange={(e) => setFormInStock(e.target.checked)} />
                     <span className="adm-toggle-slider" />
                   </label>
                 </div>
 
-                {/* ERROR */}
                 {formError && <p className="adm-form-error">{formError}</p>}
 
-                {/* SAVE BUTTON */}
-                <button
-                  className="adm-save-btn"
-                  onClick={handleSaveProduct}
-                  disabled={formSaving}
-                >
-                  {formSaving ? (
-                    "Saving..."
-                  ) : (
-                    <><FiSave size={16} /> Save Product</>
-                  )}
+                <button className="adm-save-btn" onClick={handleSaveProduct} disabled={formSaving}>
+                  {formSaving ? "Saving..." : <><FiSave size={16} /> Save Product</>}
                 </button>
               </div>
             </div>
           </>
         )}
 
-        {/* ── DASHBOARD TAB ── */}
+        {/* DASHBOARD TAB */}
         {!showAddForm && tab === "dashboard" && (
           <>
             <h1 className="adm-page-title">Dashboard</h1>
@@ -455,11 +461,7 @@ export default function AdminDashboard() {
                 <table className="adm-table">
                   <thead>
                     <tr>
-                      <th>Order</th>
-                      <th>Customer</th>
-                      <th>Items</th>
-                      <th>Total</th>
-                      <th>Status</th>
+                      <th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -479,7 +481,7 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {/* ── PRODUCTS TAB ── */}
+        {/* PRODUCTS TAB */}
         {!showAddForm && tab === "products" && (
           <>
             <div className="adm-page-header">
@@ -495,11 +497,7 @@ export default function AdminDashboard() {
               <table className="adm-table">
                 <thead>
                   <tr>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th>Actions</th>
+                    <th>Product</th><th>Category</th><th>Price</th><th>Sizes</th><th>Stock</th><th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -513,6 +511,16 @@ export default function AdminDashboard() {
                       </td>
                       <td>{p.Category || "—"}</td>
                       <td>₦{Number(p.price).toFixed(2)}</td>
+                      <td>
+                        <div className="adm-size-list">
+                          {p.sizes && p.sizes.length > 0
+                            ? p.sizes.map((s: string) => (
+                                <span key={s} className="adm-size-pill">{s}</span>
+                              ))
+                            : <span className="adm-no-sizes">—</span>
+                          }
+                        </div>
+                      </td>
                       <td><span className="adm-badge adm-badge-instock">In Stock</span></td>
                       <td>
                         <button className="adm-delete-btn" onClick={() => deleteProduct(p.id)} title="Delete">
@@ -527,7 +535,7 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {/* ── ORDERS TAB ── */}
+        {/* ORDERS TAB */}
         {!showAddForm && tab === "orders" && (
           <>
             <div className="adm-page-header">
@@ -540,12 +548,7 @@ export default function AdminDashboard() {
               <table className="adm-table">
                 <thead>
                   <tr>
-                    <th>Order</th>
-                    <th>Customer</th>
-                    <th>Date</th>
-                    <th>Items</th>
-                    <th>Total</th>
-                    <th>Status</th>
+                    <th>Order</th><th>Customer</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -565,7 +568,7 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {/* ── CUSTOMERS TAB ── */}
+        {/* CUSTOMERS TAB */}
         {!showAddForm && tab === "customers" && (
           <>
             <div className="adm-page-header">
@@ -577,11 +580,7 @@ export default function AdminDashboard() {
             <div className="adm-table-wrap">
               <table className="adm-table">
                 <thead>
-                  <tr>
-                    <th>Customer</th>
-                    <th>Email</th>
-                    <th>Joined</th>
-                  </tr>
+                  <tr><th>Customer</th><th>Email</th><th>Joined</th></tr>
                 </thead>
                 <tbody>
                   {customers.map((c) => {
@@ -608,4 +607,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-

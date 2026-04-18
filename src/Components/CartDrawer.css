@@ -202,6 +202,16 @@
   animation:toastSlide 0.4s ease;
   z-index:2000;
 }
+.item-size {
+  display: inline-block;
+  font-size: 11px;
+  color: #e8621a;
+  font-weight: 600;
+  background: #fef0e8;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-top: 3px;
+}
 
 @keyframes toastSlide{
   from{
