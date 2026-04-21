@@ -3,26 +3,22 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiSearch, FiShoppingBag, FiUser, FiX, FiMenu } from "react-icons/fi";
 import CartDrawer from "./CartDrawer";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import toast from "react-hot-toast";
 import "./Navbar.css";
 
-type Profile = {
-  username?: string | null;
-  first_name?: string | null;
-  role?: string | null;
-};
-
 function Navbar() {
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  //  Use shared auth — no network call here at all
+  const { user, profile } = useAuth();
+  const { cart } = useCart();
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { cart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -30,81 +26,6 @@ function Navbar() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
-
-  const fetchProfile = async (userId: string) => {
-    const { data: profileData, error } = await supabase
-      .from("profiles")
-      .select("username, first_name, role")
-      .eq("id", userId)
-      .single();
-
-    if (error) {
-      console.error("Failed to fetch profile:", error.message);
-      setProfile(null);
-      return;
-    }
-
-    setProfile(profileData);
-  };
-
-  useEffect(() => {
-    let mounted = true;
-
-    const syncUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        if (mounted) {
-          setUser(null);
-          setProfile(null);
-        }
-        return;
-      }
-
-      const { data, error } = await supabase.auth.getUser();
-
-      if (error) {
-        if (mounted) {
-          setUser(null);
-          setProfile(null);
-        }
-        return;
-      }
-
-      const currentUser = data.user ?? null;
-      if (!mounted) return;
-
-      setUser(currentUser);
-      if (currentUser) {
-        await fetchProfile(currentUser.id);
-        return;
-      }
-      setProfile(null);
-    };
-
-    syncUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const nextUser = session?.user ?? null;
-      setUser(nextUser);
-      setShowMenu(false);
-
-      if (nextUser) {
-        await fetchProfile(nextUser.id);
-        return;
-      }
-      setProfile(null);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
 
   useEffect(() => {
     if (showSearch && searchInputRef.current) {
@@ -124,17 +45,18 @@ function Navbar() {
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
+
+  // Close menu on route change
+  useEffect(() => {
+    setShowMenu(false);
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Logout failed. Please try again.");
-      return;
-    }
+    if (error) { toast.error("Logout failed. Please try again."); return; }
     navigate("/login");
   };
 
@@ -144,51 +66,25 @@ function Navbar() {
     if (!confirm("Delete your account?")) return;
     if (!user) return;
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session?.access_token) {
-      toast.error("Your session has expired. Please log in again and try deleting your account.");
+      toast.error("Your session has expired. Please log in again.");
       navigate("/login");
       return;
     }
 
     const { data, error } = await supabase.functions.invoke("delete-account", {
       body: {},
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
+      headers: { Authorization: `Bearer ${session.access_token}` },
     });
 
-    if (error) {
-      let details = error.message;
-
-      if ("context" in error && error.context instanceof Response) {
-        try {
-          const payload = await error.context.json();
-          if (payload?.error) {
-            details = payload.error;
-          }
-        } catch {
-          // Fall back to the original error message when the response body isn't JSON.
-        }
-      }
-
-      console.error("Delete account failed:", details);
-      toast.error(`Delete account failed: ${details}`);
-      return;
-    }
-
-    if (data?.error) {
-      console.error("Delete account failed:", data.error);
-      toast.error(`Delete account failed: ${data.error}`);
+    if (error || data?.error) {
+      toast.error("Delete account failed.");
       return;
     }
 
     await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
     setShowMenu(false);
     closeMobile();
     toast.success("Your account has been deleted.");
@@ -207,8 +103,7 @@ function Navbar() {
     setSearchQuery("");
   };
 
-  const normalizedRole = profile?.role?.toString().trim().toLowerCase();
-  const isAdmin = normalizedRole === "admin";
+  const isAdmin = profile?.role?.toString().trim().toLowerCase() === "admin";
   const isHomePage = location.pathname === "/";
 
   return (
@@ -219,18 +114,10 @@ function Navbar() {
         </div>
 
         <ul className="nav-links">
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/shop">Shop</Link>
-          </li>
-          <li>
-            <Link to="/about">About</Link>
-          </li>
-          <li>
-            <Link to="/contact">Contact</Link>
-          </li>
+          <li><Link to="/">Home</Link></li>
+          <li><Link to="/shop">Shop</Link></li>
+          <li><Link to="/about">About</Link></li>
+          <li><Link to="/contact">Contact</Link></li>
         </ul>
 
         <div className="nav-icons">
@@ -246,29 +133,23 @@ function Navbar() {
               <FiUser className="nav-icon profile-icon" onClick={() => setShowMenu(!showMenu)} />
               {showMenu && (
                 <div className="dropdown">
-                  <p className="username">{profile?.username || profile?.first_name || user.email}</p>
-                  <Link to="/profile" onClick={() => setShowMenu(false)}>
-                    My Profile
-                  </Link>
-                  <Link to="/orders" onClick={() => setShowMenu(false)}>
-                    My Orders
-                  </Link>
+                  <p className="username">
+                    {profile?.username || profile?.first_name || user.email}
+                  </p>
+                  <Link to="/profile" onClick={() => setShowMenu(false)}>My Profile</Link>
+                  <Link to="/orders" onClick={() => setShowMenu(false)}>My Orders</Link>
                   {isAdmin && (
                     <Link to="/admin" className="admin-link" onClick={() => setShowMenu(false)}>
                       Admin Dashboard
                     </Link>
                   )}
                   <button onClick={handleLogout}>Logout</button>
-                  <button className="delete" onClick={handleDeleteAccount}>
-                    Delete Account
-                  </button>
+                  <button className="delete" onClick={handleDeleteAccount}>Delete Account</button>
                 </div>
               )}
             </div>
           ) : (
-            <Link to="/login" className="login-btn">
-              Login
-            </Link>
+            <Link to="/login" className="login-btn">Login</Link>
           )}
 
           <button className="hamburger" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
@@ -277,80 +158,44 @@ function Navbar() {
         </div>
       </nav>
 
+      {/* MOBILE MENU */}
       <div className={`mobile-overlay ${mobileOpen ? "open" : ""}`} onClick={closeMobile}>
         <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
           <div className="mobile-menu-header">
             <span className="mobile-logo">ASIKA</span>
-            <button className="mobile-close" onClick={closeMobile}>
-              <FiX />
-            </button>
+            <button className="mobile-close" onClick={closeMobile}><FiX /></button>
           </div>
-
           <ul className="mobile-links">
-            <li>
-              <Link to="/" onClick={closeMobile}>
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link to="/shop" onClick={closeMobile}>
-                Shop
-              </Link>
-            </li>
-            <li>
-              <Link to="/about" onClick={closeMobile}>
-                About
-              </Link>
-            </li>
-            <li>
-              <Link to="/contact" onClick={closeMobile}>
-                Contact
-              </Link>
-            </li>
+            <li><Link to="/" onClick={closeMobile}>Home</Link></li>
+            <li><Link to="/shop" onClick={closeMobile}>Shop</Link></li>
+            <li><Link to="/about" onClick={closeMobile}>About</Link></li>
+            <li><Link to="/contact" onClick={closeMobile}>Contact</Link></li>
           </ul>
-
           <div className="mobile-divider" />
-
           {user ? (
             <div className="mobile-user">
-              <p className="mobile-username">{profile?.username || profile?.first_name || user.email}</p>
-              <Link to="/profile" onClick={closeMobile}>
-                My Profile
-              </Link>
-              <Link to="/orders" onClick={closeMobile}>
-                My Orders
-              </Link>
+              <p className="mobile-username">
+                {profile?.username || profile?.first_name || user.email}
+              </p>
+              <Link to="/profile" onClick={closeMobile}>My Profile</Link>
+              <Link to="/orders" onClick={closeMobile}>My Orders</Link>
               {isAdmin && (
                 <Link to="/admin" className="mobile-admin-link" onClick={closeMobile}>
                   Admin Dashboard
                 </Link>
               )}
-              <button
-                onClick={() => {
-                  closeMobile();
-                  handleLogout();
-                }}
-              >
-                Logout
-              </button>
-              <button
-                className="mobile-delete"
-                onClick={() => {
-                  closeMobile();
-                  handleDeleteAccount();
-                }}
-              >
+              <button onClick={() => { closeMobile(); handleLogout(); }}>Logout</button>
+              <button className="mobile-delete" onClick={() => { closeMobile(); handleDeleteAccount(); }}>
                 Delete Account
               </button>
             </div>
           ) : (
-            <Link to="/login" className="mobile-login-btn" onClick={closeMobile}>
-              Login
-            </Link>
+            <Link to="/login" className="mobile-login-btn" onClick={closeMobile}>Login</Link>
           )}
         </div>
       </div>
 
+      {/* SEARCH OVERLAY */}
       {showSearch && (
         <div className="search-overlay">
           <div className="search-overlay-inner">
@@ -364,16 +209,10 @@ function Navbar() {
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
             {searchQuery && (
-              <button className="search-clear" onClick={() => setSearchQuery("")}>
-                <FiX />
-              </button>
+              <button className="search-clear" onClick={() => setSearchQuery("")}><FiX /></button>
             )}
-            <button className="search-submit" onClick={handleSearch}>
-              Search
-            </button>
-            <button className="search-close" onClick={handleSearchClose}>
-              <FiX />
-            </button>
+            <button className="search-submit" onClick={handleSearch}>Search</button>
+            <button className="search-close" onClick={handleSearchClose}><FiX /></button>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { useSeo } from "../lib/useSeo";
 import "./Orders.css";
 
@@ -12,15 +13,19 @@ const Orders = () => {
     robots: "noindex, nofollow",
   });
 
+  // ✅ Use shared auth — no extra getUser() call
+  const { user, loading: authLoading } = useAuth();
+
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    // Wait for auth to resolve before fetching
+    if (authLoading) return;
+    if (!user) { setLoading(false); return; }
 
+    const fetchOrders = async () => {
       const { data, error } = await supabase
         .from("orders")
         .select(`
@@ -40,15 +45,13 @@ const Orders = () => {
         .eq("customer_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error(error);
-      } else {
-        setOrders(data || []);
-      }
+      if (error) { console.error(error); }
+      else { setOrders(data || []); }
       setLoading(false);
     };
+
     fetchOrders();
-  }, []);
+  }, [user, authLoading]);
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrders((prev) => {
@@ -58,22 +61,33 @@ const Orders = () => {
     });
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric", month: "short", day: "numeric",
     });
-  };
 
   const shortId = (id: string) => id.slice(0, 8).toUpperCase();
 
-  if (loading) {
+  // Show skeleton while auth or data is loading
+  if (authLoading || loading) {
     return (
       <div className="orders-page">
-        <div className="orders-loading">
-          <div className="orders-spinner" />
-          <p>Loading your orders...</p>
+        <div className="orders-skeleton-wrap">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="orders-skeleton-card" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="orders-page">
+        <div className="orders-empty">
+          <h2>Please log in</h2>
+          <p>You need to be logged in to view your orders.</p>
+          <Link to="/login" className="orders-shop-btn">Log In</Link>
         </div>
       </div>
     );
@@ -122,13 +136,9 @@ const Orders = () => {
           {orders.map((order, index) => {
             const isExpanded = expandedOrders.has(order.id);
             const itemCount = order.order_items?.length || 0;
-
             return (
               <div key={order.id} className="order-card">
-                {/* ORANGE TOP ACCENT */}
                 <div className="order-card-accent" />
-
-                {/* ORDER META */}
                 <div className="order-meta">
                   <div className="order-meta-left">
                     <span className="order-label">ORDER</span>
@@ -140,67 +150,38 @@ const Orders = () => {
                     <span className="order-date">{formatDate(order.created_at)}</span>
                   </div>
                 </div>
-
-                {/* DIVIDER */}
                 <div className="order-divider" />
-
-                {/* ITEMS PREVIEW */}
                 <div className="order-items-list">
                   {order.order_items?.slice(0, isExpanded ? undefined : 2).map((item: any, i: number) => (
                     <div key={i} className="order-item">
                       <div className="order-item-img-wrap">
-                        <img
-                          src={item.products?.image || "/placeholder.png"}
-                          alt={item.products?.name}
-                        />
+                        <img src={item.products?.image || "/placeholder.png"} alt={item.products?.name} />
                       </div>
                       <div className="order-item-info">
                         <p className="order-item-name">{item.products?.name}</p>
                         <span className="order-item-qty">Qty: {item.quantity}</span>
                       </div>
-                      <span className="order-item-price">
-                        ₦{(item.price * item.quantity).toFixed(2)}
-                      </span>
+                      <span className="order-item-price">₦{(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
-
-                  {/* SHOW MORE */}
                   {!isExpanded && itemCount > 2 && (
-                    <button
-                      className="order-show-more"
-                      onClick={() => toggleExpand(order.id)}
-                    >
+                    <button className="order-show-more" onClick={() => toggleExpand(order.id)}>
                       +{itemCount - 2} more item{itemCount - 2 > 1 ? "s" : ""}
                     </button>
                   )}
                 </div>
-
-                {/* FOOTER */}
                 <div className="order-footer">
                   <div className="order-status">
                     <span className="status-dot" />
                     <span className="status-label">Confirmed</span>
                   </div>
-
                   <div className="order-footer-right">
                     <span className="order-total">₦{Number(order.total).toFixed(2)}</span>
-                    <button
-                      className="order-toggle-btn"
-                      onClick={() => toggleExpand(order.id)}
-                    >
+                    <button className="order-toggle-btn" onClick={() => toggleExpand(order.id)}>
                       {isExpanded ? "Hide details" : "View details"}
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        style={{
-                          transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
-                          transition: "transform 0.2s ease",
-                        }}
-                      >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" strokeWidth="2"
+                        style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
                         <polyline points="6 9 12 15 18 9" />
                       </svg>
                     </button>

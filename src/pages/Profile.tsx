@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { useSeo } from "../lib/useSeo";
 import "./Profile.css";
@@ -13,7 +14,9 @@ export default function Profile() {
     robots: "noindex, nofollow",
   });
 
-  const [user, setUser] = useState<any>(null);
+  // ✅ Use shared auth — no extra getUser() call
+  const { user, loading: authLoading } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -25,21 +28,14 @@ export default function Profile() {
   });
 
   useEffect(() => {
+    // Wait for auth to resolve
+    if (authLoading) return;
+    if (!user) { setLoading(false); return; }
+
     const getProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      setUser(user);
-
       const { data } = await supabase
         .from("profiles")
-        .select("*")
+        .select("username, first_name, last_name")
         .eq("id", user.id)
         .single();
 
@@ -50,12 +46,11 @@ export default function Profile() {
           last_name: data.last_name || "",
         });
       }
-
       setLoading(false);
     };
 
     getProfile();
-  }, []);
+  }, [user, authLoading]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -63,9 +58,7 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (!user) return;
-
     setSaving(true);
-
     const { error } = await supabase
       .from("profiles")
       .update(form)
@@ -77,23 +70,27 @@ export default function Profile() {
     } else {
       toast.error(error.message);
     }
-
     setSaving(false);
   };
 
-  if (loading) {
+  // Show skeleton while loading
+  if (authLoading || loading) {
     return (
       <div className="profile-page">
-        <div className="profile-loading">
-          <div className="profile-spinner" />
-          <p>Loading your profile...</p>
+        <div className="profile-skeleton-wrap">
+          <div className="profile-skeleton-header" />
+          <div className="profile-skeleton-card" />
         </div>
       </div>
     );
   }
 
   if (!user) {
-    return <p className="profile-loading">Please log in to view your profile.</p>;
+    return (
+      <div className="profile-page">
+        <p className="profile-loading">Please log in to view your profile.</p>
+      </div>
+    );
   }
 
   return (
@@ -105,7 +102,6 @@ export default function Profile() {
 
         <div className="profile-header">
           <div className="avatar">{form.first_name?.charAt(0) || "U"}</div>
-
           <div>
             <h1>My Profile</h1>
             <p className="sub">Manage your account details</p>
@@ -117,11 +113,7 @@ export default function Profile() {
             <div className="field">
               <label>USERNAME</label>
               {editing ? (
-                <input
-                  name="username"
-                  value={form.username}
-                  onChange={handleChange}
-                />
+                <input name="username" value={form.username} onChange={handleChange} />
               ) : (
                 <p>@{form.username}</p>
               )}
@@ -131,24 +123,15 @@ export default function Profile() {
               <div className="field">
                 <label>FIRST NAME</label>
                 {editing ? (
-                  <input
-                    name="first_name"
-                    value={form.first_name}
-                    onChange={handleChange}
-                  />
+                  <input name="first_name" value={form.first_name} onChange={handleChange} />
                 ) : (
                   <p>{form.first_name}</p>
                 )}
               </div>
-
               <div className="field">
                 <label>LAST NAME</label>
                 {editing ? (
-                  <input
-                    name="last_name"
-                    value={form.last_name}
-                    onChange={handleChange}
-                  />
+                  <input name="last_name" value={form.last_name} onChange={handleChange} />
                 ) : (
                   <p>{form.last_name}</p>
                 )}
@@ -165,9 +148,7 @@ export default function Profile() {
           </div>
 
           {!editing ? (
-            <button className="edit-btn" onClick={() => setEditing(true)}>
-              Edit Profile
-            </button>
+            <button className="edit-btn" onClick={() => setEditing(true)}>Edit Profile</button>
           ) : (
             <button className="save-btn" onClick={handleSave}>
               {saving ? "Saving..." : "Save Changes"}
@@ -175,7 +156,6 @@ export default function Profile() {
           )}
         </div>
       </div>
-
       <Footer />
     </>
   );
