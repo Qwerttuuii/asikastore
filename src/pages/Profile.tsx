@@ -74,16 +74,16 @@ export default function Profile() {
   };
 
   // Show skeleton while loading
-  if (authLoading || loading) {
-    return (
-      <div className="profile-page">
-        <div className="profile-skeleton-wrap">
-          <div className="profile-skeleton-header" />
-          <div className="profile-skeleton-card" />
-        </div>
+if (authLoading || loading) {
+  return (
+    <div className="profile-page">
+      <div className="profile-loading">
+        <div className="profile-spinner" />
+        <p>Loading your profile...</p>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (!user) {
     return (

@@ -69,17 +69,16 @@ const Orders = () => {
   const shortId = (id: string) => id.slice(0, 8).toUpperCase();
 
   // Show skeleton while auth or data is loading
-  if (authLoading || loading) {
-    return (
-      <div className="orders-page">
-        <div className="orders-skeleton-wrap">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="orders-skeleton-card" />
-          ))}
-        </div>
+if (authLoading || loading) {
+  return (
+    <div className="orders-page">
+      <div className="orders-loading">
+        <div className="orders-spinner" />
+        <p>Loading your orders...</p>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (!user) {
     return (
