@@ -14,7 +14,7 @@ export default function Profile() {
     robots: "noindex, nofollow",
   });
 
-  // ✅ Use shared auth — no extra getUser() call
+  //  Use shared auth — no extra getUser() call
   const { user, loading: authLoading } = useAuth();
 
   const [loading, setLoading] = useState(true);

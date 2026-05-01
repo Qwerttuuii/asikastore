@@ -70,3 +70,12 @@ select {
     transform: rotate(360deg);
   }
 }
+
+.asika-page-loader {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  color: #666;
+  font-size: 14px;
+  font-weight: 600;
+}

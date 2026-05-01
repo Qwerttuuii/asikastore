@@ -24,7 +24,9 @@ const Register = () => {
   const navigate = useNavigate();
 
   const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    const values = new Uint32Array(1);
+    crypto.getRandomValues(values);
+    return (100000 + (values[0] % 900000)).toString();
   };
 
   const buildOtpPayload = (otp: string) => ({

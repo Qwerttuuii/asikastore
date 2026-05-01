@@ -6,6 +6,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useSeo } from "../lib/useSeo";
 import "./Shop.css"
 
+const PAGE_SIZE = 12;
+
 type Product = {
   id: string
   name: string
@@ -18,6 +20,8 @@ export default function Shop() {
   const [products, setProducts] = useState<Product[]>([])
   const [category, setCategory] = useState("all")
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [totalProducts, setTotalProducts] = useState(0)
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -34,32 +38,60 @@ export default function Shop() {
   });
 
   useEffect(() => {
+    if (page !== 0) {
+      setPage(0)
+      return
+    }
+
     getProducts()
-  }, [])
+  }, [category, search])
+
+  useEffect(() => {
+    if (page > 0) {
+      getProducts()
+    }
+  }, [page])
 
   const getProducts = async () => {
     setLoading(true)
-    const { data, error } = await supabase
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    let queryBuilder = supabase
       .from("products")
-      .select("*")
+      .select("id, name, price, image, Category", { count: "exact" })
+      .order("name", { ascending: true })
+      .range(from, to)
+
+    if (category !== "all") {
+      queryBuilder = queryBuilder.eq("Category", category)
+    }
+
+    if (search) {
+      queryBuilder = queryBuilder.ilike("name", `%${search}%`)
+    }
+
+    const { data, error, count } = await queryBuilder
+
     if (error) {
       console.error(error)
       setLoading(false)
       return
     }
+
     if (data) {
-      setProducts(data)
+      if (page === 0) {
+        setProducts(data as Product[])
+      } else {
+        setProducts((current) => [...current, ...(data as Product[])])
+      }
     }
+
+    setTotalProducts(count ?? 0)
     setLoading(false)
   }
 
-  const filteredProducts = products.filter((product) => {
-    const matchesCategory =
-      category === "all" || product.Category === category;
-    const matchesSearch =
-      product.name.toLowerCase().includes(search);
-    return matchesCategory && matchesSearch;
-  });
+  const hasMoreProducts = products.length < totalProducts;
 
   // Clicking any filter clears the search param from URL
   const handleCategoryChange = (cat: string) => {
@@ -115,7 +147,7 @@ export default function Shop() {
             </button>
           </div>
           <div className="filter-info">
-            {loading ? "Loading..." : `${filteredProducts.length} pieces`}
+            {loading && page === 0 ? "Loading..." : `${totalProducts} pieces`}
           </div>
         </div>
 
@@ -129,7 +161,7 @@ export default function Shop() {
               <div className="skeleton-card"></div>
             </>
           ) : (
-            filteredProducts.map((product) => (
+            products.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -137,6 +169,21 @@ export default function Shop() {
             ))
           )}
         </div>
+
+        {!loading && products.length === 0 && (
+          <div className="shop-empty">
+            <h3>No pieces found</h3>
+            <p>Try another category or search term.</p>
+          </div>
+        )}
+
+        {hasMoreProducts && (
+          <div className="shop-load-more">
+            <button type="button" onClick={() => setPage((value) => value + 1)} disabled={loading}>
+              {loading ? "Loading..." : "Load more"}
+            </button>
+          </div>
+        )}
 
         {/* BOTTOM MESSAGE */}
         <div className="shop-bottom">

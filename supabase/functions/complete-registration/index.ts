@@ -95,23 +95,7 @@ serve(async (req) => {
       });
     }
 
-    const { data: usersData, error: listUsersError } = await adminClient.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
-    });
-
-    if (listUsersError) {
-      return new Response(JSON.stringify({ error: listUsersError.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const existingAuthUser = usersData.users.find(
-      (user) => user.email?.toLowerCase() === email.toLowerCase(),
-    );
-
-    const existingUserId = existingProfile?.id ?? existingAuthUser?.id;
+    const existingUserId = existingProfile?.id;
 
     if (existingUserId) {
       const { error: updateUserError } = await adminClient.auth.admin.updateUserById(

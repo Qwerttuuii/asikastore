@@ -23,6 +23,7 @@ import { useSeo } from "../lib/useSeo";
 import "./AdminDashboard.css";
 
 const BUCKET = "asika storeage";
+const ADMIN_PAGE_SIZE = 50;
 
 export default function AdminDashboard() {
   useSeo({
@@ -35,6 +36,9 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [productCount, setProductCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
+  const [customerCount, setCustomerCount] = useState(0);
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [tab, setTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
@@ -81,19 +85,41 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: productsData } = await supabase.from("products").select("*");
-    const { data: ordersData } = await supabase
-      .from("orders")
-      .select(`id, total, created_at, email, order_items(quantity)`)
-      .order("created_at", { ascending: false });
-    const { data: customersData } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name, email, created_at")
-      .eq("role", "USER");
+    const [
+      productsResult,
+      ordersResult,
+      customersResult,
+      productCountResult,
+      orderCountResult,
+      customerCountResult,
+    ] = await Promise.all([
+      supabase
+        .from("products")
+        .select("*")
+        .order("name", { ascending: true })
+        .range(0, ADMIN_PAGE_SIZE - 1),
+      supabase
+        .from("orders")
+        .select(`id, total, created_at, email, order_items(quantity)`)
+        .order("created_at", { ascending: false })
+        .range(0, ADMIN_PAGE_SIZE - 1),
+      supabase
+        .from("profiles")
+        .select("id, first_name, last_name, email, created_at")
+        .eq("role", "USER")
+        .order("created_at", { ascending: false })
+        .range(0, ADMIN_PAGE_SIZE - 1),
+      supabase.from("products").select("id", { count: "exact", head: true }),
+      supabase.from("orders").select("id", { count: "exact", head: true }),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "USER"),
+    ]);
 
-    setProducts(productsData || []);
-    setOrders(ordersData || []);
-    setCustomers(customersData || []);
+    setProducts(productsResult.data || []);
+    setOrders(ordersResult.data || []);
+    setCustomers(customersResult.data || []);
+    setProductCount(productCountResult.count ?? 0);
+    setOrderCount(orderCountResult.count ?? 0);
+    setCustomerCount(customerCountResult.count ?? 0);
     setLoading(false);
   };
 
@@ -187,7 +213,7 @@ export default function AdminDashboard() {
     setFormSaving(false);
   };
 
-  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0);
+  const recentRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0);
   const recentOrders = orders.slice(0, 5);
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -424,18 +450,18 @@ export default function AdminDashboard() {
             <div className="adm-stats">
               <div className="adm-stat-card">
                 <div className="adm-stat-top">
-                  <span className="adm-stat-label">Total Revenue</span>
+                  <span className="adm-stat-label">Recent Revenue</span>
                   <span className="adm-stat-icon adm-icon-orange">₦</span>
                 </div>
-                <p className="adm-stat-value">₦{totalRevenue.toLocaleString()}</p>
-                <p className="adm-stat-change">All time</p>
+                <p className="adm-stat-value">₦{recentRevenue.toLocaleString()}</p>
+                <p className="adm-stat-change">Latest {orders.length} orders</p>
               </div>
               <div className="adm-stat-card">
                 <div className="adm-stat-top">
                   <span className="adm-stat-label">Orders</span>
                   <span className="adm-stat-icon"><FiShoppingBag size={18} /></span>
                 </div>
-                <p className="adm-stat-value">{orders.length}</p>
+                <p className="adm-stat-value">{orderCount}</p>
                 <p className="adm-stat-change">Total orders</p>
               </div>
               <div className="adm-stat-card">
@@ -443,7 +469,7 @@ export default function AdminDashboard() {
                   <span className="adm-stat-label">Products</span>
                   <span className="adm-stat-icon"><FiPackage size={18} /></span>
                 </div>
-                <p className="adm-stat-value">{products.length}</p>
+                <p className="adm-stat-value">{productCount}</p>
                 <p className="adm-stat-change">In catalogue</p>
               </div>
               <div className="adm-stat-card">
@@ -451,7 +477,7 @@ export default function AdminDashboard() {
                   <span className="adm-stat-label">Customers</span>
                   <span className="adm-stat-icon"><FiUsers size={18} /></span>
                 </div>
-                <p className="adm-stat-value">{customers.length}</p>
+                <p className="adm-stat-value">{customerCount}</p>
                 <p className="adm-stat-change">Registered users</p>
               </div>
             </div>
@@ -487,7 +513,7 @@ export default function AdminDashboard() {
             <div className="adm-page-header">
               <div>
                 <h1 className="adm-page-title" style={{ margin: 0 }}>Products</h1>
-                <p className="adm-page-count">{products.length} products</p>
+                <p className="adm-page-count">Showing {products.length} of {productCount} products</p>
               </div>
               <button className="adm-add-btn" onClick={() => setShowAddForm(true)}>
                 <FiPlus size={16} /> Add Product
@@ -541,7 +567,7 @@ export default function AdminDashboard() {
             <div className="adm-page-header">
               <div>
                 <h1 className="adm-page-title" style={{ margin: 0 }}>Orders</h1>
-                <p className="adm-page-count">{orders.length} orders</p>
+                <p className="adm-page-count">Showing latest {orders.length} of {orderCount} orders</p>
               </div>
             </div>
             <div className="adm-table-wrap">
@@ -574,7 +600,7 @@ export default function AdminDashboard() {
             <div className="adm-page-header">
               <div>
                 <h1 className="adm-page-title" style={{ margin: 0 }}>Customers</h1>
-                <p className="adm-page-count">{customers.length} customers</p>
+                <p className="adm-page-count">Showing latest {customers.length} of {customerCount} customers</p>
               </div>
             </div>
             <div className="adm-table-wrap">

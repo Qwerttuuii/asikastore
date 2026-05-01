@@ -116,7 +116,9 @@ const VerifyEmail = () => {
     setResending(true);
 
     try {
-      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const values = new Uint32Array(1);
+      crypto.getRandomValues(values);
+      const newOtp = (100000 + (values[0] % 900000)).toString();
 
       const { error: insertError } = await supabase
         .from("otp_codes")

@@ -270,6 +270,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  min-width: 600px;
 }
 
 .adm-table thead tr {
@@ -853,4 +854,5 @@
   .adm-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .adm-field-row { grid-template-columns: 1fr; }
   .adm-form-body { padding: 20px; }
+  .adm-table-wrap { overflow-x: auto; }
 }
