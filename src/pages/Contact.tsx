@@ -1,5 +1,6 @@
 import { useSeo } from "../lib/useSeo";
 import { useState } from "react";
+import { FaWhatsapp } from "react-icons/fa";
 import "./Contact.css";
 import Footer from "../Components/Footer";
 
@@ -211,13 +212,14 @@ const Contact = () => {
 
       {/* Floating WhatsApp Button */}
       <a 
-        href="https://wa.me/234XXXXXXXXXX" 
+        href="https://wa.me/2348124212685" 
         target="_blank" 
         rel="noopener noreferrer"
         className="whatsapp-float"
         aria-label="Chat on WhatsApp"
       >
-        <WhatsAppIcon />
+        <FaWhatsapp aria-hidden="true" />
+        <span className="whatsapp-tooltip">Chat with us</span>
       </a>
 
       <Footer />
@@ -248,13 +250,6 @@ const TikTokIcon = () => (
     <path d="M15 9.5V4h4" />
     <path d="M15 9.5c1.657 0 3 1.343 3 3v.5" />
     <path d="M18 13.5c-1.657 0-3-1.343-3-3" />
-  </svg>
-);
-
-const WhatsAppIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.966-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.485-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.67-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 2.7 1.046 5.176 2.776 7.034L4 22l3.062-1.624c1.8.998 3.85 1.55 5.938 1.55 5.523 0 10-4.484 10-10.017C22 6.484 17.523 2 12 2z"/>
   </svg>
 );
 

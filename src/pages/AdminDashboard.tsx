@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FiGrid,
   FiPackage,
@@ -18,6 +18,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext"; //  use shared auth
 import toast from "react-hot-toast";
 import { useSeo } from "../lib/useSeo";
 import "./AdminDashboard.css";
@@ -33,13 +34,16 @@ export default function AdminDashboard() {
     robots: "noindex, nofollow",
   });
 
+  // : Use shared auth — no extra getUser() network call
+  const { user, profile, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [productCount, setProductCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
   const [customerCount, setCustomerCount] = useState(0);
-  const [adminProfile, setAdminProfile] = useState<any>(null);
   const [tab, setTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -55,33 +59,27 @@ export default function AdminDashboard() {
   const [formImagePreview, setFormImagePreview] = useState<string>("");
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState("");
-
-  // SIZES STATE
   const [sizeInput, setSizeInput] = useState("");
   const [formSizes, setFormSizes] = useState<string[]>([]);
 
+  //  Wait for auth to resolve, then check admin role
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { window.location.href = "/login"; return; }
+    if (authLoading) return;
 
-      const { data } = await supabase
-        .from("profiles")
-        .select("role, first_name")
-        .eq("id", user.id)
-        .single();
+    if (!user) {
+      navigate("/login");
+      return;
+    }
 
-      const normalizedRole = data?.role?.toString().trim().toLowerCase();
-      if (normalizedRole !== "admin") {
-        toast.error("Access denied.");
-        window.location.href = "/";
-        return;
-      }
-      setAdminProfile({ ...data, email: user.email });
-      fetchData();
-    };
-    checkAdmin();
-  }, []);
+    const normalizedRole = profile?.role?.toString().trim().toLowerCase();
+    if (normalizedRole !== "admin") {
+      toast.error("Access denied.");
+      navigate("/");
+      return;
+    }
+
+    fetchData();
+  }, [user, profile, authLoading]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -93,22 +91,9 @@ export default function AdminDashboard() {
       orderCountResult,
       customerCountResult,
     ] = await Promise.all([
-      supabase
-        .from("products")
-        .select("*")
-        .order("name", { ascending: true })
-        .range(0, ADMIN_PAGE_SIZE - 1),
-      supabase
-        .from("orders")
-        .select(`id, total, created_at, email, order_items(quantity)`)
-        .order("created_at", { ascending: false })
-        .range(0, ADMIN_PAGE_SIZE - 1),
-      supabase
-        .from("profiles")
-        .select("id, first_name, last_name, email, created_at")
-        .eq("role", "USER")
-        .order("created_at", { ascending: false })
-        .range(0, ADMIN_PAGE_SIZE - 1),
+      supabase.from("products").select("*").order("name", { ascending: true }).range(0, ADMIN_PAGE_SIZE - 1),
+      supabase.from("orders").select(`id, total, created_at, email, order_items(quantity)`).order("created_at", { ascending: false }).range(0, ADMIN_PAGE_SIZE - 1),
+      supabase.from("profiles").select("id, first_name, last_name, email, created_at").eq("role", "USER").order("created_at", { ascending: false }).range(0, ADMIN_PAGE_SIZE - 1),
       supabase.from("products").select("id", { count: "exact", head: true }),
       supabase.from("orders").select("id", { count: "exact", head: true }),
       supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "USER"),
@@ -136,7 +121,6 @@ export default function AdminDashboard() {
     setFormImagePreview(URL.createObjectURL(file));
   };
 
-  // SIZE HELPERS
   const addSize = () => {
     const trimmed = sizeInput.trim();
     if (!trimmed) return;
@@ -150,16 +134,10 @@ export default function AdminDashboard() {
   };
 
   const resetForm = () => {
-    setFormName("");
-    setFormPrice("");
-    setFormCategory("");
-    setFormDescription("");
-    setFormInStock(true);
-    setFormImageFile(null);
-    setFormImagePreview("");
-    setFormError("");
-    setFormSizes([]);
-    setSizeInput("");
+    setFormName(""); setFormPrice(""); setFormCategory("");
+    setFormDescription(""); setFormInStock(true);
+    setFormImageFile(null); setFormImagePreview("");
+    setFormError(""); setFormSizes([]); setSizeInput("");
   };
 
   const handleSaveProduct = async () => {
@@ -175,8 +153,7 @@ export default function AdminDashboard() {
       const fileName = `${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from(BUCKET)
-        .upload(fileName, formImageFile, { upsert: false });
+        .from(BUCKET).upload(fileName, formImageFile, { upsert: false });
 
       if (uploadError) {
         setFormError(`Image upload failed: ${uploadError.message}`);
@@ -193,7 +170,7 @@ export default function AdminDashboard() {
         Category: formCategory,
         description: formDescription.trim(),
         image: imageUrl,
-        sizes: formSizes,  // ✅ save sizes array
+        sizes: formSizes,
       });
 
       if (insertError) {
@@ -213,16 +190,21 @@ export default function AdminDashboard() {
     setFormSaving(false);
   };
 
+  // ✅ FIX 2: Proper signout using navigate instead of window.location.href
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Sign out failed. Please try again.");
+      return;
+    }
+    navigate("/");
+  };
+
   const recentRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0);
   const recentOrders = orders.slice(0, 5);
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const shortId = (id: string) => id.slice(0, 8).toUpperCase();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
 
   const navItems = [
     { key: "dashboard", label: "Dashboard", icon: <FiGrid size={16} /> },
@@ -237,7 +219,8 @@ export default function AdminDashboard() {
     setSidebarOpen(false);
   };
 
-  if (loading) {
+  // Show spinner while auth resolves
+  if (authLoading || loading) {
     return (
       <div className="adm-loading">
         <div className="adm-spinner" />
@@ -274,7 +257,7 @@ export default function AdminDashboard() {
         </nav>
         <div className="adm-sidebar-footer">
           <p className="adm-admin-label">Admin</p>
-          <p className="adm-admin-email">{adminProfile?.email}</p>
+          <p className="adm-admin-email">{user?.email}</p>
           <button className="adm-signout" onClick={handleLogout}>
             <FiLogOut size={14} /> Sign Out
           </button>
@@ -307,12 +290,9 @@ export default function AdminDashboard() {
                 <p className="adm-form-subtitle">Fill in the details below to add a product</p>
               </div>
             </div>
-
             <div className="adm-form-card">
               <div className="adm-form-accent" />
               <div className="adm-form-body">
-
-                {/* PRODUCT NAME */}
                 <div className="adm-field">
                   <label className="adm-label">
                     <FiTag size={14} className="adm-label-icon adm-label-orange" />
@@ -321,8 +301,6 @@ export default function AdminDashboard() {
                   <input className="adm-input" placeholder="e.g. Satin Slip Dress"
                     value={formName} onChange={(e) => setFormName(e.target.value)} />
                 </div>
-
-                {/* PRICE + CATEGORY */}
                 <div className="adm-field-row">
                   <div className="adm-field">
                     <label className="adm-label">
@@ -348,8 +326,6 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                 </div>
-
-                {/* ✅ SIZES FIELD */}
                 <div className="adm-field">
                   <label className="adm-label">
                     <FiTag size={14} className="adm-label-icon adm-label-orange" />
@@ -361,9 +337,7 @@ export default function AdminDashboard() {
                       placeholder="e.g. 0, 2, 4, 6, 8, 10, 12..."
                       value={sizeInput}
                       onChange={(e) => setSizeInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") { e.preventDefault(); addSize(); }
-                      }}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSize(); } }}
                     />
                     <button type="button" className="adm-size-add-btn" onClick={addSize}>
                       <FiPlus size={15} /> Add
@@ -375,16 +349,12 @@ export default function AdminDashboard() {
                       {formSizes.map((size) => (
                         <span key={size} className="adm-size-tag">
                           {size}
-                          <button type="button" onClick={() => removeSize(size)}>
-                            <FiX size={11} />
-                          </button>
+                          <button type="button" onClick={() => removeSize(size)}><FiX size={11} /></button>
                         </span>
                       ))}
                     </div>
                   )}
                 </div>
-
-                {/* IMAGE UPLOAD */}
                 <div className="adm-field">
                   <label className="adm-label">
                     <FiImage size={14} className="adm-label-icon adm-label-orange" />
@@ -409,8 +379,6 @@ export default function AdminDashboard() {
                     </button>
                   )}
                 </div>
-
-                {/* DESCRIPTION */}
                 <div className="adm-field">
                   <label className="adm-label">
                     <FiFileText size={14} className="adm-label-icon adm-label-orange" />
@@ -419,8 +387,6 @@ export default function AdminDashboard() {
                   <textarea className="adm-input adm-textarea" placeholder="Describe your product..."
                     value={formDescription} onChange={(e) => setFormDescription(e.target.value)} rows={4} />
                 </div>
-
-                {/* IN STOCK TOGGLE */}
                 <div className="adm-toggle-row">
                   <div>
                     <p className="adm-toggle-label">In Stock</p>
@@ -432,9 +398,7 @@ export default function AdminDashboard() {
                     <span className="adm-toggle-slider" />
                   </label>
                 </div>
-
                 {formError && <p className="adm-form-error">{formError}</p>}
-
                 <button className="adm-save-btn" onClick={handleSaveProduct} disabled={formSaving}>
                   {formSaving ? "Saving..." : <><FiSave size={16} /> Save Product</>}
                 </button>
@@ -540,9 +504,7 @@ export default function AdminDashboard() {
                       <td>
                         <div className="adm-size-list">
                           {p.sizes && p.sizes.length > 0
-                            ? p.sizes.map((s: string) => (
-                                <span key={s} className="adm-size-pill">{s}</span>
-                              ))
+                            ? p.sizes.map((s: string) => <span key={s} className="adm-size-pill">{s}</span>)
                             : <span className="adm-no-sizes">—</span>
                           }
                         </div>

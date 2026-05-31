@@ -33,13 +33,11 @@ export default function Checkout() {
   useEffect(() => {
     const initUser = async () => {
       const { data } = await supabase.auth.getUser();
-
       if (!data.user) {
         toast.error("Please login to continue.");
         navigate("/login");
         return;
       }
-
       const { data: profile } = await supabase
         .from("profiles")
         .select("first_name, last_name, email, address, phone")
@@ -54,11 +52,13 @@ export default function Checkout() {
         setPhone(profile.phone || "");
       }
     };
-
     initUser();
   }, [navigate]);
 
-  const subtotal = cart.reduce((total, item) => total + (item?.products?.price || 0) * item.quantity, 0);
+  const subtotal = cart.reduce(
+    (total, item) => total + (item?.products?.price || 0) * item.quantity,
+    0
+  );
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
 
@@ -66,25 +66,21 @@ export default function Checkout() {
 
   const validateForm = () => {
     const newErrors: any = {};
-
     if (!firstName.trim()) newErrors.firstName = "Required";
     if (!lastName.trim()) newErrors.lastName = "Required";
     if (!email.trim()) newErrors.email = "Required";
     if (!phone.trim()) newErrors.phone = "Required";
     if (!address.trim()) newErrors.address = "Required";
-
     setErrors(newErrors);
 
     if (cart.length === 0) {
       toast.error("Your cart is empty.");
       return false;
     }
-
     if (!publicKey) {
       toast.error("Payment is temporarily unavailable. Please contact support.");
       return false;
     }
-
     const valid = Object.keys(newErrors).length === 0;
     if (valid) setStep(2);
     return valid;
@@ -103,27 +99,27 @@ export default function Checkout() {
 
   const handleSuccess = async (reference: any) => {
     setLoading(true);
-
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         toast.error("Session expired. Please login again.");
         navigate("/login");
         return;
       }
 
-      const verifyRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ reference: reference.reference }),
-      });
+      // VERIFY PAYMENT
+      const verifyRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ reference: reference.reference }),
+        }
+      );
 
       let verifyData: any = null;
       try {
@@ -134,37 +130,31 @@ export default function Checkout() {
 
       if (!verifyRes.ok) {
         const reason = verifyData?.error || verifyData?.message || `HTTP ${verifyRes.status}`;
-        console.error("verify-payment HTTP error:", verifyRes.status, verifyData);
         toast.error(`Payment verification failed: ${reason}`);
         return;
       }
 
       if (verifyData?.data?.status !== "success") {
         toast.error(
-          `Payment verification failed: ${verifyData?.data?.gateway_response || "Transaction not successful"}`,
+          `Payment verification failed: ${verifyData?.data?.gateway_response || "Transaction not successful"}`
         );
         return;
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      // GET USER
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("User not found.");
         return;
       }
 
+      // UPDATE PROFILE with latest contact info
       await supabase
         .from("profiles")
-        .update({
-          first_name: firstName,
-          last_name: lastName,
-          address,
-          phone,
-        })
+        .update({ first_name: firstName, last_name: lastName, address, phone })
         .eq("id", user.id);
 
+      // ✅ CREATE ORDER — now includes phone, address, first_name, last_name
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -172,6 +162,10 @@ export default function Checkout() {
           email: user.email,
           reference: reference.reference,
           total,
+          phone,           // ✅ saved
+          address,         // ✅ saved
+          first_name: firstName,  // ✅ saved
+          last_name: lastName,    // ✅ saved
         })
         .select()
         .single();
@@ -181,6 +175,7 @@ export default function Checkout() {
         return;
       }
 
+      // CREATE ORDER ITEMS
       const orderItems = cart.map((item) => ({
         order_id: order.id,
         product_id: item?.products?.id,
@@ -189,6 +184,8 @@ export default function Checkout() {
       }));
 
       await supabase.from("order_items").insert(orderItems);
+
+      // CLEAR CART
       await supabase.from("cart").delete().eq("user_id", user.id);
 
       navigate("/order-success");
@@ -207,14 +204,11 @@ export default function Checkout() {
           <a href="/shop" className="back-link">Back to shop</a>
           <h1>Checkout</h1>
           <p className="checkout-sub">Complete your order - you're almost there!</p>
-
           <div className="checkout-steps">
             <div className={`step ${step === 1 ? "active" : ""}`}>
               <span>1</span> Information
             </div>
-
             <div className="step-line"></div>
-
             <div className={`step ${step === 2 ? "active" : ""}`}>
               <span>2</span> Payment
             </div>
@@ -233,7 +227,6 @@ export default function Checkout() {
                     <input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                     {errors.firstName && <span className="error">{errors.firstName}</span>}
                   </div>
-
                   <div className="form-group">
                     <label>Last Name</label>
                     <input value={lastName} onChange={(e) => setLastName(e.target.value)} />
@@ -249,7 +242,11 @@ export default function Checkout() {
 
                 <div className="form-group">
                   <label>Phone</label>
-                  <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+234 XXX XXX XXXX"
+                  />
                   {errors.phone && <span className="error">{errors.phone}</span>}
                 </div>
 
@@ -267,7 +264,18 @@ export default function Checkout() {
 
             {step === 2 && (
               <>
-                <p style={{ marginBottom: "20px", color: "#666" }}>You're almost done. Complete your payment.</p>
+                {/* CONTACT SUMMARY */}
+                <div className="contact-summary">
+                  <p><strong>{firstName} {lastName}</strong></p>
+                  <p>{email}</p>
+                  <p>{phone}</p>
+                  <p>{address}</p>
+                  <button className="edit-info-btn" onClick={() => setStep(1)}>Edit</button>
+                </div>
+
+                <p style={{ marginBottom: "20px", color: "#666" }}>
+                  You're almost done. Complete your payment.
+                </p>
 
                 <button className="btn-outline" onClick={() => setStep(1)}>
                   Back
@@ -289,44 +297,38 @@ export default function Checkout() {
 
           <div className="order-summary">
             <h2>Order Summary</h2>
-
             {cart.length === 0 ? (
               <p style={{ color: "#777" }}>Your cart is empty</p>
             ) : (
               cart.map((item) => (
                 <div key={item.id} className="summary-item">
-                  <img src={item?.products?.image || "/placeholder.png"} alt={item?.products?.name || "product"} />
-
+                  <img
+                    src={item?.products?.image || "/placeholder.png"}
+                    alt={item?.products?.name || "product"}
+                  />
                   <div className="summary-info">
                     <p>{item?.products?.name || "Unnamed Product"}</p>
-                    <span>
-                      {item.quantity} x N{item?.products?.price || 0}
-                    </span>
+                    <span>{item.quantity} x ₦{item?.products?.price || 0}</span>
                   </div>
-
-                  <p>N{((item?.products?.price || 0) * item.quantity).toFixed(2)}</p>
+                  <p>₦{((item?.products?.price || 0) * item.quantity).toFixed(2)}</p>
                 </div>
               ))
             )}
-
             <div className="summary-row">
               <span>Subtotal</span>
-              <span>N{subtotal.toFixed(2)}</span>
+              <span>₦{subtotal.toFixed(2)}</span>
             </div>
-
             <div className="summary-row">
               <span>Tax</span>
-              <span>N{tax.toFixed(2)}</span>
+              <span>₦{tax.toFixed(2)}</span>
             </div>
-
             <div className="summary-total">
               <span>Total</span>
-              <span>N{total.toFixed(2)}</span>
+              <span>₦{total.toFixed(2)}</span>
             </div>
           </div>
         </div>
       </div>
-
       <Footer />
     </>
   );

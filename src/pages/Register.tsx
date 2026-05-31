@@ -36,22 +36,38 @@ const Register = () => {
     expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
   });
 
+  // ✅ FIXED: direct fetch with anon key instead of supabase.functions.invoke
   const sendOTPEmail = async (toEmail: string, otp: string, name: string) => {
-    const { error } = await supabase.functions.invoke("send-otp-email", {
-      body: {
-        email: toEmail,
-        otp,
-        name,
-        subject: "Your ASIKA verification code",
-      },
-    });
+    try {
+      const response = await fetch(
+        "https://vdmausjznhrruzhjjeuh.supabase.co/functions/v1/send-otp-email",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            email: toEmail,
+            otp,
+            name,
+            subject: "Your ASIKA verification code",
+          }),
+        }
+      );
 
-    if (error) {
-      console.error("OTP email error:", error);
+      if (!response.ok) {
+        const err = await response.json();
+        console.error("OTP email error:", err);
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error("OTP email error:", err);
       return false;
     }
-
-    return true;
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -167,7 +183,7 @@ const Register = () => {
               <label className="auth-label">Username</label>
               <input
                 className="auth-input"
-                placeholder="@janedoe"
+                placeholder="@anthony"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
