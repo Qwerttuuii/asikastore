@@ -257,7 +257,6 @@
 }
 
 /* ─── HAMBURGER ──────────────────────────────────────────── */
-/* Hidden on desktop, shown on mobile */
 .hamburger {
   display: none;
   background: none;
@@ -271,9 +270,12 @@
   transition: color 0.2s ease;
 }
 
-.hamburger:hover {
-  color: black;
-}
+.hamburger:hover { color: black; }
+
+/* ── White on homepage — sits over dark hero ── */
+.navbar-home .hamburger         { color: #fff; }
+.navbar-home .hamburger:hover   { color: rgba(255,255,255,0.7); }
+.navbar-home:hover .hamburger   { color: #fff; }
 
 /* ─── MOBILE OVERLAY ─────────────────────────────────────── */
 .mobile-overlay {
@@ -295,7 +297,7 @@
 .mobile-menu {
   position: absolute;
   top: 0;
-  right: 0;           /* ← slides in from the RIGHT to match icon position */
+  right: 0;
   left: auto;
   width: 78%;
   max-width: 300px;
@@ -303,7 +305,7 @@
   background: #fff;
   display: flex;
   flex-direction: column;
-  transform: translateX(100%);  /* ← starts off-screen to the right */
+  transform: translateX(100%);
   transition: transform 0.3s ease;
   overflow-y: auto;
 }
@@ -312,7 +314,6 @@
   transform: translateX(0);
 }
 
-/* MOBILE HEADER */
 .mobile-menu-header {
   display: flex;
   justify-content: space-between;
@@ -340,9 +341,7 @@
   transition: color 0.2s ease;
 }
 
-.mobile-close:hover {
-  color: black;
-}
+.mobile-close:hover { color: black; }
 
 /* MOBILE NAV LINKS */
 .mobile-links {
@@ -369,7 +368,6 @@
   padding-left: 30px;
 }
 
-/* DIVIDER */
 .mobile-divider {
   height: 1px;
   background: #f0f0f0;
@@ -415,11 +413,8 @@
   padding-left: 30px;
 }
 
-.mobile-delete {
-  color: #e63946 !important;
-}
+.mobile-delete { color: #e63946 !important; }
 
-/* MOBILE LOGIN */
 .mobile-login-btn {
   display: block;
   margin: 24px;
@@ -434,9 +429,7 @@
   transition: opacity 0.2s ease;
 }
 
-.mobile-login-btn:hover {
-  opacity: 0.75;
-}
+.mobile-login-btn:hover { opacity: 0.75; }
 
 /* ─── SEARCH OVERLAY ─────────────────────────────────────── */
 .search-overlay {
@@ -463,11 +456,7 @@
   margin: 0 auto;
 }
 
-.search-overlay-icon {
-  font-size: 20px;
-  color: #aaa;
-  flex-shrink: 0;
-}
+.search-overlay-icon { font-size: 20px; color: #aaa; flex-shrink: 0; }
 
 .search-overlay-inner input {
   flex: 1;
@@ -479,9 +468,7 @@
   letter-spacing: 0.3px;
 }
 
-.search-overlay-inner input::placeholder {
-  color: #bbb;
-}
+.search-overlay-inner input::placeholder { color: #bbb; }
 
 .search-clear {
   background: none;
@@ -526,20 +513,11 @@
 }
 
 .search-close:hover { color: #111; }
-/* ADD THESE TO THE BOTTOM OF YOUR Navbar.css */
 
-/* ─── ADMIN LINK (desktop dropdown) ─── */
-.dropdown .admin-link {
-  color: #e8621a;
-  font-weight: 500;
-}
+/* ─── ADMIN LINKS ────────────────────────────────────────── */
+.dropdown .admin-link { color: #e8621a; font-weight: 500; }
+.dropdown .admin-link:hover { background: #fef0e8; color: #c4500f; }
 
-.dropdown .admin-link:hover {
-  background: #fef0e8;
-  color: #c4500f;
-}
-
-/* ─── ADMIN LINK (mobile menu) ─── */
 .mobile-admin-link {
   display: block;
   padding: 13px 24px;
@@ -551,12 +529,9 @@
   transition: background 0.15s ease, padding-left 0.2s ease;
 }
 
-.mobile-admin-link:hover {
-  background: #fef0e8;
-  padding-left: 30px;
-}
+.mobile-admin-link:hover { background: #fef0e8; padding-left: 30px; }
 
-/* ─── ANIMATIONS ──── */
+/* ─── ANIMATIONS ─────────────────────────────────────────── */
 @keyframes fadeDown {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -567,20 +542,13 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── MOBILE BREAKPOINT ─── */
+/* ─── MOBILE BREAKPOINT ──────────────────────────────────── */
 @media (max-width: 768px) {
-  .navbar {
-    padding: 16px 16px;
-  }
+  .navbar { padding: 16px 16px; }
 
-  .nav-logo a {
-    font-size: 18px;
-    letter-spacing: 4px;
-  }
+  .nav-logo a { font-size: 18px; letter-spacing: 4px; }
 
-  .nav-links {
-    display: none;
-  }
+  .nav-links { display: none; }
 
   .nav-icons {
     flex: 1;
@@ -591,68 +559,26 @@
   }
 
   .hamburger {
+    display: flex;
     margin-left: auto;
   }
 
-  /* Show hamburger on mobile */
-  .hamburger {
-    display: flex;
-  }
+  .login-btn  { display: none; }
+  .profile-wrapper { display: none; }
 
-  .login-btn {
-    display: none;
-  }
-
-  .profile-wrapper {
-    display: none;
-  }
-
-  .search-overlay {
-    padding: 0 5%;
-  }
-
-  .search-overlay-inner {
-    gap: 8px;
-  }
-
-  .search-submit {
-    padding: 8px 14px;
-  }
+  .search-overlay { padding: 0 5%; }
+  .search-overlay-inner { gap: 8px; }
+  .search-submit { padding: 8px 14px; }
 }
 
 @media (max-width: 480px) {
-  .navbar {
-    padding: 14px 12px;
-  }
+  .navbar { padding: 14px 12px; }
+  .nav-logo a { font-size: 16px; letter-spacing: 3px; }
+  .nav-icon { font-size: 18px; }
+  .mobile-menu { width: 86%; }
 
-  .nav-logo a {
-    font-size: 16px;
-    letter-spacing: 3px;
-  }
-
-  .nav-icon {
-    font-size: 18px;
-  }
-
-  .mobile-menu {
-    width: 86%;
-  }
-
-  .search-overlay {
-    height: auto;
-    padding: 12px;
-  }
-
-  .search-overlay-inner {
-    flex-wrap: wrap;
-  }
-
-  .search-overlay-inner input {
-    min-width: 0;
-    width: calc(100% - 40px);
-  }
-
-  .search-submit {
-    flex: 1;
-  }
+  .search-overlay { height: auto; padding: 12px; }
+  .search-overlay-inner { flex-wrap: wrap; }
+  .search-overlay-inner input { min-width: 0; width: calc(100% - 40px); }
+  .search-submit { flex: 1; }
 }
