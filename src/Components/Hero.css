@@ -313,41 +313,37 @@
 
 /* ══════════════════════════════════════════════════════════
    MOBILE  (≤ 768px)
-   Layout: text top-left, image card bottom-right
 ══════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  /* Section becomes a flex column, content at top */
+  /* Content pushed to bottom like desktop, full width */
   .hero {
-    padding: 96px 5% 86px;
-    justify-content: flex-start;
+    padding: 0 5% 88px;
+    justify-content: flex-end;
     display: flex;
     flex-direction: column;
-    /* DON'T set overflow hidden here — it clips the card */
   }
 
-  /* BG image: face/upper body visible */
-  .hero-slide { background-position: 65% top; }
+  .hero-slide { background-position: center top; }
 
-  /* Stronger overlay — card IS the focal image */
   .hero-overlay {
     background:
       linear-gradient(
-        160deg,
-        rgba(0,0,0,0.85) 0%,
-        rgba(0,0,0,0.70) 50%,
-        rgba(0,0,0,0.40) 100%
+        to bottom,
+        rgba(0,0,0,0.15) 0%,
+        rgba(0,0,0,0.35) 40%,
+        rgba(0,0,0,0.72) 75%,
+        rgba(0,0,0,0.82) 100%
       );
   }
 
-  /* Shorter fog on mobile */
   .hero-fog { height: 160px; }
 
-  /* Content: left-aligned, max 60% width to leave room for card */
+  /* Full width — no card competing for space */
   .hero-content {
     position: relative;
     z-index: 5;
-    max-width: 62vw;
+    max-width: 100%;
     padding-top: 0;
   }
 
@@ -357,18 +353,18 @@
     margin-bottom: 14px;
   }
 
+  /* Bigger headline so it reads boldly on mobile */
   .hero-headline {
-    font-size: clamp(34px, 9vw, 52px);
-    letter-spacing: -0.5px;
-    margin-bottom: 12px;
+    font-size: clamp(44px, 11.5vw, 64px);
+    letter-spacing: -1px;
+    margin-bottom: 14px;
   }
 
   .hero-sub {
-    font-size: 12.5px;
+    font-size: 13px;
     line-height: 1.65;
-    margin-bottom: 22px;
+    margin-bottom: 26px;
     max-width: 100%;
-    /* Standard + prefixed for compatibility */
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -377,61 +373,15 @@
   }
 
   .hero-btn {
-    padding: 12px 22px;
-    font-size: 10px;
+    padding: 13px 26px;
+    font-size: 11px;
     letter-spacing: 2px;
     gap: 10px;
   }
 
-  /* ── Floating image card ──────────────────────────────── */
-  .hero-mobile-img-card {
-    display: block;
-    position: absolute;
-    /* Right side, vertically centered in the hero */
-    top: 50%;
-    right: 5%;
-    transform: translateY(-54%);  /* slightly above center looks editorial */
-    width: min(38vw, 190px);
-    /* Use padding-bottom trick for aspect ratio — wider browser support */
-    aspect-ratio: 3 / 4;
-    border-radius: 20px;
-    overflow: hidden;
-    z-index: 4;
-    box-shadow:
-      0 24px 64px rgba(0,0,0,0.65),
-      0 0 0 1px rgba(255,255,255,0.10);
-    animation: cardFadeIn 0.95s 0.25s both cubic-bezier(0.22,1,0.36,1);
-  }
-
-  @keyframes cardFadeIn {
-    from { opacity: 0; transform: translateY(calc(-54% + 28px)) scale(0.94); }
-    to   { opacity: 1; transform: translateY(-54%) scale(1); }
-  }
-
-  .hero-mobile-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top center;
-    display: block;
-  }
-
-  .hero-mobile-img-shine {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      135deg,
-      rgba(255,255,255,0.12) 0%,
-      rgba(255,255,255,0.04) 35%,
-      transparent 55%
-    );
-    pointer-events: none;
-  }
-
-  /* Bottom bar */
   .hero-bottom-bar {
     position: absolute;
-    bottom: 20px;
+    bottom: 24px;
     left: 5%;
     right: 5%;
     z-index: 6;
@@ -440,6 +390,9 @@
   .hero-dot { width: 24px; height: 2px; }
   .hero-dot.active { width: 44px; }
   .hero-scroll-hint { display: none; }
+
+  /* ── Hide the floating card entirely ── */
+  .hero-mobile-img-card { display: none !important; }
 }
 
 /* ─── SMALL PHONES (≤ 400px) — no card, text full-width ── */

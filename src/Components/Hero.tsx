@@ -135,17 +135,6 @@ export default function Hero() {
       <div className="hero-overlay" />
       <div className="hero-fog" />
 
-      {/* MOBILE — decorative image card (shows bottom-right on mobile only) */}
-      <div className="hero-mobile-img-card" aria-hidden="true">
-        <img
-          src={slide.imageMobile}
-          alt=""
-          className="hero-mobile-img"
-        />
-        {/* Shine sweep */}
-        <div className="hero-mobile-img-shine" />
-      </div>
-
       {/* CONTENT */}
       <div className="hero-content">
         <p className="hero-eyebrow" ref={eyebrowRef}>{slide.eyebrow}</p>
